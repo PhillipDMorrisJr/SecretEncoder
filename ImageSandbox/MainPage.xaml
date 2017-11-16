@@ -4,12 +4,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d" Width="874">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Margin="0,0,-574,0" RenderTransformOrigin="0.674,0.496">
         <Image x:Name="imageDisplay" HorizontalAlignment="Left" Height="199" Margin="63,119,0,0" VerticalAlignment="Top" Width="215"/>
-        <Button x:Name="button" Content="Open" HorizontalAlignment="Left" Margin="128,444,0,0" VerticalAlignment="Top" Click="button_Click"/>
-        <Button x:Name="saveButton" Content="Save" HorizontalAlignment="Left" Margin="213,444,0,0" VerticalAlignment="Top" Click="saveButton_Click"/>
+        <Image x:Name="embedDisplay" HorizontalAlignment="Left" Height="199" Margin="407,119,0,0" VerticalAlignment="Top" Width="215"/>
+        <Button x:Name="selectEmbedFileButton" Content="Choose" HorizontalAlignment="Left" Margin="10,407,0,0" VerticalAlignment="Top" Click="selectEmbedFileButton_Click"/>
+        <Button x:Name="button" Content="Open" HorizontalAlignment="Left" Margin="152,444,0,0" VerticalAlignment="Top" Click="button_Click"/>
+        <Button x:Name="saveButton" Content="Save" HorizontalAlignment="Left" Margin="214,444,0,0" VerticalAlignment="Top" Click="saveButton_Click"/>
+        <Button x:Name="embedButton" Content="Embed" HorizontalAlignment="Left" Margin="81,444,0,0" VerticalAlignment="Top" Click="embedFileButton_Click"/>
+        <TextBox x:Name="fileToEmbed" HorizontalAlignment="Left" Margin="81,407,0,0" TextWrapping="Wrap" Text="File to embed." VerticalAlignment="Top" Height="32" Width="184"/>
 
     </Grid>
 </Page>

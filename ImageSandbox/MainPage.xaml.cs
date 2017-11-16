@@ -25,6 +25,9 @@ namespace ImageSandbox
         private double dpiX;
         private double dpiY;
         private WriteableBitmap modifiedImage;
+        private WriteableBitmap embedImage;
+
+        private bool isEmbedSet;
 
         #endregion
 
@@ -32,6 +35,7 @@ namespace ImageSandbox
 
         public MainPage()
         {
+            this.isEmbedSet = false;
             this.InitializeComponent();
 
             this.modifiedImage = null;
@@ -65,7 +69,7 @@ namespace ImageSandbox
                     transform,
                     ExifOrientationMode.IgnoreExifOrientation,
                     ColorManagementMode.DoNotColorManage
-                    );
+                );
 
                 var sourcePixels = pixelData.DetachPixelData();
 
@@ -95,6 +99,111 @@ namespace ImageSandbox
             }
         }
 
+        private void embedImageWithImage(byte[] sourcePixels, byte[] embedPixels, uint embedImageWidth, uint embedImageHeight, uint sourceImageWidth, uint sourceImageHeight)
+        {
+            int y;
+            int x = y = 0;
+            Color sourceColor = Color.FromArgb(160, 160, 160, 160);
+
+            //0 is r 1 is g 2 is b
+            int sourceByte = 0;
+            for (var i = 0; i < embedImageHeight; i++)
+            {
+                for (var j = 0; j < embedImageWidth; j++)
+                {
+                    if (i == 0 && j == 0)
+                    {
+                        
+                        this.SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
+                        sourceColor = this.GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                    }
+                    else
+                    {
+                        var embedColor = this.GetPixelBgra8(embedPixels, i, j, embedImageWidth, embedImageHeight);
+
+                        if (embedColor == Colors.Black)
+                        {
+                            switch (sourceByte)
+                            {
+                                case 0:
+                                    sourceColor.R |= (0 << 0);
+                                    sourceByte = 1;
+                                    break;
+                                case 1:
+                                    sourceColor.G |= (0 << 0);
+                                    sourceByte = 2;
+                                    break;
+                                case 2:
+                                    sourceColor.B |= (0 << 0);
+                                    if (x < embedImageWidth)
+                                    {
+                                        x++;
+                                    }
+                                    else
+                                    {
+                                        x = 0;
+                                    }
+                                    if (y < embedImageHeight)
+                                    {
+                                        y++;
+                                    }
+                                    if (x == embedImageWidth && y == embedImageHeight)
+                                    {
+                                        break;
+                                    }
+                                    sourceByte = 0;
+                                    break;
+                            }
+                        }
+                        else if (embedColor == Colors.White)
+                        {
+                            switch (sourceByte)
+                            {
+                                case 0:
+                                    sourceColor.R |= (1 << 0);
+                                    sourceByte = 1;
+                                    break;
+                                case 1:
+                                    sourceColor.G |= (1 << 0);
+                                    sourceByte = 2;
+                                    break;
+                                case 2:
+                                    sourceColor.B |= (1 << 0);
+                                    this.SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
+                                    sourceColor = this.GetPixelBgra8(sourcePixels, x, y, embedImageWidth, embedImageHeight);
+                                    if (x < embedImageWidth)
+                                    {
+                                        x++;
+                                    }
+                                    else
+                                    {
+                                        x = 0;
+                                    }
+                                    if (y < embedImageHeight)
+                                    {
+                                        y++;
+                                    }
+                                    if (x == embedImageWidth && y == embedImageHeight)
+                                    {
+                                        break;
+                                    }
+                                    sourceByte = 0;
+                                    
+                                    break;
+                            }
+
+                        }
+                    }
+
+                    
+
+                    
+                }
+            }
+        }
+
+
+
         private async Task<StorageFile> selectSourceImageFile()
         {
             var openPicker = new FileOpenPicker {
@@ -120,7 +229,7 @@ namespace ImageSandbox
 
         public Color GetPixelBgra8(byte[] pixels, int x, int y, uint width, uint height)
         {
-            var offset = (x*(int) width + y)*4;
+            var offset = (x * (int) width + y) * 4;
             var r = pixels[offset + 2];
             var g = pixels[offset + 1];
             var b = pixels[offset + 0];
@@ -129,7 +238,7 @@ namespace ImageSandbox
 
         public void SetPixelBgra8(byte[] pixels, int x, int y, Color color, uint width, uint height)
         {
-            var offset = (x*(int) width + y)*4;
+            var offset = (x * (int) width + y) * 4;
             pixels[offset + 2] = color.R;
             pixels[offset + 1] = color.G;
             pixels[offset + 0] = color.B;
@@ -164,6 +273,110 @@ namespace ImageSandbox
                 await encoder.FlushAsync();
 
                 stream.Dispose();
+            }
+        }
+
+        private async  void embedFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            var sourceImageFile = await this.selectSourceImageFile();
+            var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
+
+            using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
+            {
+                var decoder = await BitmapDecoder.CreateAsync(fileStream);
+                var transform = new BitmapTransform {
+                    ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
+                    ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
+                };
+
+                this.dpiX = decoder.DpiX;
+                this.dpiY = decoder.DpiY;
+
+                var pixelData = await decoder.GetPixelDataAsync(
+                    BitmapPixelFormat.Bgra8,
+                    BitmapAlphaMode.Straight,
+                    transform,
+                    ExifOrientationMode.IgnoreExifOrientation,
+                    ColorManagementMode.DoNotColorManage
+                );
+
+                var sourcePixels = pixelData.DetachPixelData();
+
+                
+
+                //////////
+                /// 
+                var embedImageFile = await this.selectSourceImageFile();
+                var embedcopyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
+                double dpx;
+                double dpy;
+
+                using (var embedfileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
+                {
+                    var embeddecoder = await BitmapDecoder.CreateAsync(embedfileStream);
+                    var embedtransform = new BitmapTransform {
+                        ScaledWidth = Convert.ToUInt32(embedcopyBitmapImage.PixelWidth),
+                        ScaledHeight = Convert.ToUInt32(embedcopyBitmapImage.PixelHeight)
+                    };
+
+                    dpx = decoder.DpiX;
+                    dpy = decoder.DpiY;
+
+                    var pixelData2 = await decoder.GetPixelDataAsync(
+                        BitmapPixelFormat.Bgra8,
+                        BitmapAlphaMode.Straight,
+                        embedtransform,
+                        ExifOrientationMode.IgnoreExifOrientation,
+                        ColorManagementMode.DoNotColorManage
+                    );
+
+                    var embedSourcePixels = pixelData2.DetachPixelData();
+
+                    this.embedImageWithImage(sourcePixels, embedSourcePixels,embeddecoder.PixelWidth, embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
+
+                    this.modifiedImage = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
+                    using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
+                    {
+                        await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
+                        this.imageDisplay.Source = this.modifiedImage;
+                    }
+                }
+
+            }
+        }
+
+        private async void selectEmbedFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            var sourceImageFile = await this.selectSourceImageFile();
+            var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
+
+            using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
+            {
+                var decoder = await BitmapDecoder.CreateAsync(fileStream);
+                var transform = new BitmapTransform {
+                    ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
+                    ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
+                };
+
+                this.dpiX = decoder.DpiX;
+                this.dpiY = decoder.DpiY;
+
+                var pixelData = await decoder.GetPixelDataAsync(
+                    BitmapPixelFormat.Bgra8,
+                    BitmapAlphaMode.Straight,
+                    transform,
+                    ExifOrientationMode.IgnoreExifOrientation,
+                    ColorManagementMode.DoNotColorManage
+                );
+                var sourcePixels = pixelData.DetachPixelData();
+
+                this.embedImage = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
+                using (var writeStream = this.embedImage.PixelBuffer.AsStream())
+                {
+                    await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
+                    this.embedDisplay.Source = this.embedImage;
+                }
+                this.isEmbedSet = true;
             }
         }
 
