@@ -381,5 +381,148 @@ namespace ImageSandbox
         }
 
         #endregion
+
+        private byte[] extractImageWithImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
+        {
+
+            byte[] imageExtract = new byte[sourcePixels.Length];
+            int y;
+            int x = y = 0;
+            Color sourceColor;
+
+            for (var i = 0; i < sourceImageHeight; i++)
+            {
+                for (var j = 0; j < sourceImageWidth; j++)
+                {
+                    if (i == 0 && j == 0)
+                    {
+                        sourceColor = this.GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                        if (!sourceColor.Equals(Color.FromArgb(160, 160, 160, 160)))
+                        {
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        int pix0 = sourceColor.R & 1;
+                        var color = this.GetBorW(pix0, sourceImageWidth, imageExtract, x, y);
+                        this.SetPixelBgra8(imageExtract, x , y, color, sourceImageWidth, sourceImageHeight);
+                        int pix1 = sourceColor.G & 1;
+                        if (x < sourceImageWidth)
+                        {
+                            x++;
+                        }
+                        else
+                        {
+                            x = 0;
+                        }
+
+                        if (y < sourceImageHeight)
+                        {
+                            y++;
+                        }
+                        else
+                        {
+                            y = 0;
+                        }
+
+
+                        color = this.GetBorW(pix1, sourceImageWidth, imageExtract, x, y);
+                        this.SetPixelBgra8(imageExtract, x, y, color, sourceImageWidth, sourceImageHeight);
+                        int pix2 = sourceColor.B & 1;
+                        if (x < sourceImageWidth)
+                        {
+                            x++;
+                        }
+                        else
+                        {
+                            x = 0;
+                        }
+
+                        if (y < sourceImageHeight)
+                        {
+                            y++;
+                        }
+                        else
+                        {
+                            y = 0;
+                        }
+                        color = this.GetBorW(pix2, sourceImageWidth, imageExtract, x, y);
+                        this.SetPixelBgra8(imageExtract, x, y, color, sourceImageWidth, sourceImageHeight);
+                        if (x < sourceImageWidth)
+                        {
+                            x++;
+                        }
+                        else
+                        {
+                            x = 0;
+                        }
+
+                        if (y < sourceImageHeight)
+                        {
+                            y++;
+                        }
+                        else
+                        {
+                            y = 0;
+                        }
+                    }
+                }
+            }
+
+            return imageExtract;
+
+        }
+
+        private Color GetBorW(int pix, uint sourceImageWidth, byte[] imageExtract, int x, int y)
+        {
+            if (pix == 0)
+            {
+                this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth, sourceImageWidth);
+                return Color.FromArgb(0,0,0,0);
+
+            }
+            this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth, sourceImageWidth);
+            return Color.FromArgb(255, 255, 255, 255);
+        }
+
+        private async void extractImsgeButton_Click(object sender, RoutedEventArgs e)
+        {
+            var sourceImageFile = await this.selectSourceImageFile();
+            var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
+
+            using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
+            {
+                var decoder = await BitmapDecoder.CreateAsync(fileStream);
+                var transform = new BitmapTransform
+                {
+                    ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
+                    ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
+                };
+
+                this.dpiX = decoder.DpiX;
+                this.dpiY = decoder.DpiY;
+
+                var pixelData = await decoder.GetPixelDataAsync(
+                    BitmapPixelFormat.Bgra8,
+                    BitmapAlphaMode.Straight,
+                    transform,
+                    ExifOrientationMode.IgnoreExifOrientation,
+                    ColorManagementMode.DoNotColorManage
+                );
+                var sourcePixels = pixelData.DetachPixelData();
+
+                var hidden = this.extractImageWithImage(sourcePixels, decoder.PixelWidth, decoder.PixelHeight);
+
+                this.embedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
+                using (var writeStream = this.embedImage.PixelBuffer.AsStream())
+                {
+                    await writeStream.WriteAsync(hidden, 0, hidden.Length);
+                    this.embedDisplay.Source = this.embedImage;
+                }
+                this.isEmbedSet = true;
+            }
+        }
+        
     }
 }

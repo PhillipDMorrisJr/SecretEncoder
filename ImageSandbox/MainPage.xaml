@@ -14,6 +14,7 @@
         <Button x:Name="saveButton" Content="Save" HorizontalAlignment="Left" Margin="214,444,0,0" VerticalAlignment="Top" Click="saveButton_Click"/>
         <Button x:Name="embedButton" Content="Embed" HorizontalAlignment="Left" Margin="81,444,0,0" VerticalAlignment="Top" Click="embedFileButton_Click"/>
         <TextBox x:Name="fileToEmbed" HorizontalAlignment="Left" Margin="81,407,0,0" TextWrapping="Wrap" Text="File to embed." VerticalAlignment="Top" Height="32" Width="184"/>
+        <Button x:Name="extractButton" Content="Button" HorizontalAlignment="Left" Margin="15,444,0,0" VerticalAlignment="Top" Click="extractImsgeButton_Click"/>
 
     </Grid>
 </Page>
