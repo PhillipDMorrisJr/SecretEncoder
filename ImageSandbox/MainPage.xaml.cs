@@ -263,13 +263,13 @@ namespace ImageSandbox
                 var stream = await savefile.OpenAsync(FileAccessMode.ReadWrite);
                 var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
 
-                var pixelStream = this.modifiedImage.PixelBuffer.AsStream();
+                var pixelStream = this.ImageResult.PixelBuffer.AsStream();
                 var pixels = new byte[pixelStream.Length];
                 await pixelStream.ReadAsync(pixels, 0, pixels.Length);
 
                 encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore,
-                    (uint) this.modifiedImage.PixelWidth,
-                    (uint) this.modifiedImage.PixelHeight, this.dpiX, this.dpiY, pixels);
+                    (uint) this.ImageResult.PixelWidth,
+                    (uint) this.ImageResult.PixelHeight, this.dpiX, this.dpiY, pixels);
                 await encoder.FlushAsync();
 
                 stream.Dispose();
@@ -474,29 +474,10 @@ namespace ImageSandbox
 
         }
 
-        private Color GetBorW(int pix, uint sourceImageWidth, byte[] imageExtract, int x, int y)
-        {
-            if (pix == 0)
-            {
-                this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth, sourceImageWidth);
-                return Color.FromArgb(0,0,0,0);
-
-            }
-            this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth, sourceImageWidth);
-            return Color.FromArgb(255, 255, 255, 255);
-        }
-
-
-        private void embedTextButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private async void selectImageSource_OnClick(object sender, RoutedEventArgs e)
+        private async Task updateImage(Image imageToUpdate)
         {
             var sourceImageFile = await this.selectSourceImageFile();
             var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
-
             using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
@@ -519,23 +500,46 @@ namespace ImageSandbox
 
                 var sourcePixels = pixelData.DetachPixelData();
 
-                this.modifiedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
-                await updateImage(sourcePixels, this.imageDisplay, this.modifiedImage);
+                this.modifiedImage = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
+                await updateImageSource(sourcePixels, imageToUpdate, this.modifiedImage);
             }
         }
 
-        private async Task updateImage(byte[] sourcePixels, Image originalImage, WriteableBitmap updatedImage)
+        private async Task updateImageSource(byte[] sourcePixels, Image originalImage, WriteableBitmap updatedImage)
         {
             using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
             {
                 await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
                 originalImage.Source = this.modifiedImage;
-                
             }
         }
     
 
-        private void selectImageToEmbed_OnClick(object sender, RoutedEventArgs e)
+        private Color GetBorW(int pix, uint sourceImageWidth, byte[] imageExtract, int x, int y)
+        {
+            if (pix == 0)
+            {
+                this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth, sourceImageWidth);
+                return Color.FromArgb(0,0,0,0);
+
+            }
+            this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth, sourceImageWidth);
+            return Color.FromArgb(255, 255, 255, 255);
+        }
+      
+
+        private async void selectSourceImage_OnClick(object sender, RoutedEventArgs e)
+        {
+            await updateImage(this.imageDisplay);
+        }
+        private async void selectImageToEmbed_OnClick(object sender, RoutedEventArgs e)
+        {
+            await updateImage(this.embedDisplay);
+        }
+
+
+
+        private void embedTextButton_OnClick(object sender, RoutedEventArgs e)
         {
             throw new NotImplementedException();
         }
@@ -546,6 +550,16 @@ namespace ImageSandbox
         }
 
         private void saveButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void extractTextButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void extractImageButton_OnClick(object sender, RoutedEventArgs e)
         {
             throw new NotImplementedException();
         }
