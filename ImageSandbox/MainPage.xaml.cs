@@ -24,6 +24,8 @@ namespace ImageSandbox
         private double dpiY;
         private WriteableBitmap modifiedImage;
         private WriteableBitmap embedImage;
+        private WriteableBitmap ImageResult;
+        private WriteableBitmap sourceImage;
 
         private bool isEmbedSet;
 
@@ -484,7 +486,13 @@ namespace ImageSandbox
             return Color.FromArgb(255, 255, 255, 255);
         }
 
-        private async void extractImsgeButton_Click(object sender, RoutedEventArgs e)
+
+        private void embedTextButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private async void selectImageSource_OnClick(object sender, RoutedEventArgs e)
         {
             var sourceImageFile = await this.selectSourceImageFile();
             var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
@@ -508,19 +516,38 @@ namespace ImageSandbox
                     ExifOrientationMode.IgnoreExifOrientation,
                     ColorManagementMode.DoNotColorManage
                 );
+
                 var sourcePixels = pixelData.DetachPixelData();
 
-                var hidden = this.extractImageWithImage(sourcePixels, decoder.PixelWidth, decoder.PixelHeight);
-
-                this.embedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
-                using (var writeStream = this.embedImage.PixelBuffer.AsStream())
-                {
-                    await writeStream.WriteAsync(hidden, 0, hidden.Length);
-                    this.embedDisplay.Source = this.embedImage;
-                }
-                this.isEmbedSet = true;
+                this.modifiedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
+                await updateImage(sourcePixels, this.imageDisplay, this.modifiedImage);
             }
         }
-        
+
+        private async Task updateImage(byte[] sourcePixels, Image originalImage, WriteableBitmap updatedImage)
+        {
+            using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
+            {
+                await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
+                originalImage.Source = this.modifiedImage;
+                
+            }
+        }
+    
+
+        private void selectImageToEmbed_OnClick(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void embedImageButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void saveButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

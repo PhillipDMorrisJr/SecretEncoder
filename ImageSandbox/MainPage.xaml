@@ -8,13 +8,16 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Margin="0,0,-574,0" RenderTransformOrigin="0.674,0.496">
         <Image x:Name="imageDisplay" HorizontalAlignment="Left" Height="199" Margin="63,119,0,0" VerticalAlignment="Top" Width="215"/>
-        <Image x:Name="embedDisplay" HorizontalAlignment="Left" Height="199" Margin="407,119,0,0" VerticalAlignment="Top" Width="215"/>
-        <Button x:Name="selectEmbedFileButton" Content="Choose" HorizontalAlignment="Left" Margin="10,407,0,0" VerticalAlignment="Top" Click="selectEmbedFileButton_Click"/>
-        <Button x:Name="button" Content="Open" HorizontalAlignment="Left" Margin="152,444,0,0" VerticalAlignment="Top" Click="button_Click"/>
-        <Button x:Name="saveButton" Content="Save" HorizontalAlignment="Left" Margin="214,444,0,0" VerticalAlignment="Top" Click="saveButton_Click"/>
-        <Button x:Name="embedButton" Content="Embed" HorizontalAlignment="Left" Margin="81,444,0,0" VerticalAlignment="Top" Click="embedFileButton_Click"/>
-        <TextBox x:Name="fileToEmbed" HorizontalAlignment="Left" Margin="81,407,0,0" TextWrapping="Wrap" Text="File to embed." VerticalAlignment="Top" Height="32" Width="184"/>
-        <Button x:Name="extractButton" Content="Button" HorizontalAlignment="Left" Margin="15,444,0,0" VerticalAlignment="Top" Click="extractImsgeButton_Click"/>
+        <Image x:Name="embedDisplay" HorizontalAlignment="Left" Height="199" Margin="614,119,0,0" VerticalAlignment="Top" Width="249"/>
+        <Image x:Name="encryptedImage" HorizontalAlignment="Left" Height="199" Margin="336,119,0,0" VerticalAlignment="Top" Width="215"/>
+        
+        <TextBox x:Name="textToEmbed" HorizontalAlignment="Left" Margin="238,395,0,0" TextWrapping="Wrap" Text="Type to text you would like to encrypt" VerticalAlignment="Top" Height="32" Width="504"/>
+        
+        <Button x:Name="encryptTextButton" Content="Embed Text" HorizontalAlignment="Left" Margin="137,395,0,0" VerticalAlignment="Top" Click="embedTextButton_OnClick"/>
+        <Button x:Name="selectImageToEncryptButton" Content="Select Image To Encrypt" HorizontalAlignment="Left" Margin="685,318,0,0" VerticalAlignment="Top" Click="selectImageToEmbed_OnClick"/>
+        <Button x:Name="saveEncryptedImageButton" Content="Save" HorizontalAlignment="Left" Margin="406,318,0,0" VerticalAlignment="Top" Click="saveButton_OnClick"/>
+        <Button x:Name="embedButton" Content="Embed" HorizontalAlignment="Left" Margin="614,318,0,0" VerticalAlignment="Top" Click="embedImageButton_OnClick"/>
+        <Button x:Name="selectImageSource" Content="Open" HorizontalAlignment="Left" Margin="137,318,0,0" VerticalAlignment="Top" Click="selectImageSource_OnClick"/>
 
     </Grid>
 </Page>
