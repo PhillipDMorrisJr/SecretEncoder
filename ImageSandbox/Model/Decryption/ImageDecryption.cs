@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 
 namespace ImageSandbox.Model.Decryption
 {
-    class ImageDecryption
+    /// <summary>
+    /// 
+    /// </summary>
+    public class ImageDecryption
     {
+
     }
 }

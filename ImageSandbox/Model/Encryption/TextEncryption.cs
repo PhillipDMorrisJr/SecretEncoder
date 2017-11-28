@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 
 namespace ImageSandbox.Model.Encryption
 {
-    class TextEncryption
+    /// <summary>
+    /// Encrypts text into an image.
+    /// </summary>
+    public class TextEncryption
     {
+
     }
 }

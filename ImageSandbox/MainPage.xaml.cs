@@ -14,7 +14,7 @@ using Windows.UI.Xaml.Media.Imaging;
 namespace ImageSandbox
 {
     /// <summary>
-    ///     An empty page that can be used on its own or navigated to within a Frame.
+    /// Application entry poin that displays the main page.
     /// </summary>
     public sealed partial class MainPage : Page
     {
@@ -97,21 +97,21 @@ namespace ImageSandbox
             }
         }
 
-        private void embedImageWithImage(byte[] sourcePixels, byte[] embedPixels, uint embedImageWidth, uint embedImageHeight, uint sourceImageWidth, uint sourceImageHeight)
+        private void embedImageWithImage(byte[] sourcePixels, byte[] embedPixels, uint embedImageWidth,
+            uint embedImageHeight, uint sourceImageWidth, uint sourceImageHeight)
         {
             int y;
-            int x = y = 0;
-            Color sourceColor = Color.FromArgb(160, 160, 160, 160);
+            var x = y = 0;
+            var sourceColor = Color.FromArgb(160, 160, 160, 160);
 
             //0 is r 1 is g 2 is b
-            int sourceByte = 0;
+            var sourceByte = 0;
             for (var i = 0; i < embedImageHeight; i++)
             {
                 for (var j = 0; j < embedImageWidth; j++)
                 {
                     if (i == 0 && j == 0)
                     {
-                        
                         this.SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
                         sourceColor = this.GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                     }
@@ -124,15 +124,15 @@ namespace ImageSandbox
                             switch (sourceByte)
                             {
                                 case 0:
-                                    sourceColor.R |= (0 << 0);
+                                    sourceColor.R |= 0 << 0;
                                     sourceByte = 1;
                                     break;
                                 case 1:
-                                    sourceColor.G |= (0 << 0);
+                                    sourceColor.G |= 0 << 0;
                                     sourceByte = 2;
                                     break;
                                 case 2:
-                                    sourceColor.B |= (0 << 0);
+                                    sourceColor.B |= 0 << 0;
                                     if (x < embedImageWidth)
                                     {
                                         x++;
@@ -158,17 +158,19 @@ namespace ImageSandbox
                             switch (sourceByte)
                             {
                                 case 0:
-                                    sourceColor.R |= (1 << 0);
+                                    sourceColor.R |= 1 << 0;
                                     sourceByte = 1;
                                     break;
                                 case 1:
-                                    sourceColor.G |= (1 << 0);
+                                    sourceColor.G |= 1 << 0;
                                     sourceByte = 2;
                                     break;
                                 case 2:
-                                    sourceColor.B |= (1 << 0);
-                                    this.SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
-                                    sourceColor = this.GetPixelBgra8(sourcePixels, x, y, embedImageWidth, embedImageHeight);
+                                    sourceColor.B |= 1 << 0;
+                                    this.SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth,
+                                        sourceImageHeight);
+                                    sourceColor =
+                                        this.GetPixelBgra8(sourcePixels, x, y, embedImageWidth, embedImageHeight);
                                     if (x < embedImageWidth)
                                     {
                                         x++;
@@ -186,21 +188,14 @@ namespace ImageSandbox
                                         break;
                                     }
                                     sourceByte = 0;
-                                    
+
                                     break;
                             }
-
                         }
                     }
-
-                    
-
-                    
                 }
             }
         }
-
-
 
         private async Task<StorageFile> selectSourceImageFile()
         {
@@ -274,7 +269,7 @@ namespace ImageSandbox
             }
         }
 
-        private async  void embedFileButton_Click(object sender, RoutedEventArgs e)
+        private async void embedFileButton_Click(object sender, RoutedEventArgs e)
         {
             var sourceImageFile = await this.selectSourceImageFile();
             var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
@@ -299,8 +294,6 @@ namespace ImageSandbox
                 );
 
                 var sourcePixels = pixelData.DetachPixelData();
-
-                
 
                 //////////
                 /// 
@@ -330,7 +323,8 @@ namespace ImageSandbox
 
                     var embedSourcePixels = pixelData2.DetachPixelData();
 
-                    this.embedImageWithImage(sourcePixels, embedSourcePixels,embeddecoder.PixelWidth, embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
+                    this.embedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth,
+                        embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
 
                     this.modifiedImage = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
                     using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
@@ -339,7 +333,6 @@ namespace ImageSandbox
                         this.imageDisplay.Source = this.modifiedImage;
                     }
                 }
-
             }
         }
 
@@ -378,14 +371,11 @@ namespace ImageSandbox
             }
         }
 
-        #endregion
-
         private byte[] extractImageWithImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
         {
-
-            byte[] imageExtract = new byte[sourcePixels.Length];
+            var imageExtract = new byte[sourcePixels.Length];
             int y;
-            int x = y = 0;
+            var x = y = 0;
             Color sourceColor;
 
             for (var i = 0; i < sourceImageHeight; i++)
@@ -397,15 +387,14 @@ namespace ImageSandbox
                         sourceColor = this.GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                         if (!sourceColor.Equals(Color.FromArgb(160, 160, 160, 160)))
                         {
-                            continue;
                         }
                     }
                     else
                     {
-                        int pix0 = sourceColor.R & 1;
+                        var pix0 = sourceColor.R & 1;
                         var color = this.GetBorW(pix0, sourceImageWidth, imageExtract, x, y);
-                        this.SetPixelBgra8(imageExtract, x , y, color, sourceImageWidth, sourceImageHeight);
-                        int pix1 = sourceColor.G & 1;
+                        this.SetPixelBgra8(imageExtract, x, y, color, sourceImageWidth, sourceImageHeight);
+                        var pix1 = sourceColor.G & 1;
                         if (x < sourceImageWidth)
                         {
                             x++;
@@ -424,10 +413,9 @@ namespace ImageSandbox
                             y = 0;
                         }
 
-
                         color = this.GetBorW(pix1, sourceImageWidth, imageExtract, x, y);
                         this.SetPixelBgra8(imageExtract, x, y, color, sourceImageWidth, sourceImageHeight);
-                        int pix2 = sourceColor.B & 1;
+                        var pix2 = sourceColor.B & 1;
                         if (x < sourceImageWidth)
                         {
                             x++;
@@ -469,18 +457,18 @@ namespace ImageSandbox
             }
 
             return imageExtract;
-
         }
 
         private Color GetBorW(int pix, uint sourceImageWidth, byte[] imageExtract, int x, int y)
         {
             if (pix == 0)
             {
-                this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth, sourceImageWidth);
-                return Color.FromArgb(0,0,0,0);
-
+                this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth,
+                    sourceImageWidth);
+                return Color.FromArgb(0, 0, 0, 0);
             }
-            this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth, sourceImageWidth);
+            this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth,
+                sourceImageWidth);
             return Color.FromArgb(255, 255, 255, 255);
         }
 
@@ -492,8 +480,7 @@ namespace ImageSandbox
             using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var transform = new BitmapTransform
-                {
+                var transform = new BitmapTransform {
                     ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
                     ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
                 };
@@ -512,7 +499,7 @@ namespace ImageSandbox
 
                 var hidden = this.extractImageWithImage(sourcePixels, decoder.PixelWidth, decoder.PixelHeight);
 
-                this.embedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
+                this.embedImage = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
                 using (var writeStream = this.embedImage.PixelBuffer.AsStream())
                 {
                     await writeStream.WriteAsync(hidden, 0, hidden.Length);
@@ -521,6 +508,7 @@ namespace ImageSandbox
                 this.isEmbedSet = true;
             }
         }
-        
+
+        #endregion
     }
 }
