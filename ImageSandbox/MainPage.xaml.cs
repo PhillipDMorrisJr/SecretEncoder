@@ -10,6 +10,7 @@ using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
+using ImageSandbox.Model.Encryption;
 
 namespace ImageSandbox
 {
@@ -26,6 +27,8 @@ namespace ImageSandbox
         private WriteableBitmap embedImage;
         private WriteableBitmap ImageResult;
         private WriteableBitmap sourceImage;
+        private StorageFile sourceImageFile;
+        private StorageFile embedImageFile;
 
         private bool isEmbedSet;
 
@@ -46,163 +49,6 @@ namespace ImageSandbox
         #endregion
 
         #region Methods
-
-        private async void button_Click(object sender, RoutedEventArgs e)
-        {
-            var sourceImageFile = await this.selectSourceImageFile();
-            var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
-
-            using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
-            {
-                var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var transform = new BitmapTransform {
-                    ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
-                    ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
-                };
-
-                this.dpiX = decoder.DpiX;
-                this.dpiY = decoder.DpiY;
-
-                var pixelData = await decoder.GetPixelDataAsync(
-                    BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Straight,
-                    transform,
-                    ExifOrientationMode.IgnoreExifOrientation,
-                    ColorManagementMode.DoNotColorManage
-                );
-
-                var sourcePixels = pixelData.DetachPixelData();
-
-                this.giveImageRedTint(sourcePixels, decoder.PixelWidth, decoder.PixelHeight);
-
-                this.modifiedImage = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
-                using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
-                {
-                    await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
-                    this.imageDisplay.Source = this.modifiedImage;
-                }
-            }
-        }
-
-        private void giveImageRedTint(byte[] sourcePixels, uint imageWidth, uint imageHeight)
-        {
-            for (var i = 0; i < imageHeight; i++)
-            {
-                for (var j = 0; j < imageWidth; j++)
-                {
-                    var pixelColor = this.GetPixelBgra8(sourcePixels, i, j, imageWidth, imageHeight);
-
-                    pixelColor.R = 255;
-
-                    this.SetPixelBgra8(sourcePixels, i, j, pixelColor, imageWidth, imageHeight);
-                }
-            }
-        }
-
-        private void embedImageWithImage(byte[] sourcePixels, byte[] embedPixels, uint embedImageWidth, uint embedImageHeight, uint sourceImageWidth, uint sourceImageHeight)
-        {
-            int y;
-            int x = y = 0;
-            Color sourceColor = Color.FromArgb(160, 160, 160, 160);
-
-            //0 is r 1 is g 2 is b
-            int sourceByte = 0;
-            for (var i = 0; i < embedImageHeight; i++)
-            {
-                for (var j = 0; j < embedImageWidth; j++)
-                {
-                    if (i == 0 && j == 0)
-                    {
-                        
-                        this.SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
-                        sourceColor = this.GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
-                    }
-                    else
-                    {
-                        var embedColor = this.GetPixelBgra8(embedPixels, i, j, embedImageWidth, embedImageHeight);
-
-                        if (embedColor == Colors.Black)
-                        {
-                            switch (sourceByte)
-                            {
-                                case 0:
-                                    sourceColor.R |= (0 << 0);
-                                    sourceByte = 1;
-                                    break;
-                                case 1:
-                                    sourceColor.G |= (0 << 0);
-                                    sourceByte = 2;
-                                    break;
-                                case 2:
-                                    sourceColor.B |= (0 << 0);
-                                    if (x < embedImageWidth)
-                                    {
-                                        x++;
-                                    }
-                                    else
-                                    {
-                                        x = 0;
-                                    }
-                                    if (y < embedImageHeight)
-                                    {
-                                        y++;
-                                    }
-                                    if (x == embedImageWidth && y == embedImageHeight)
-                                    {
-                                        break;
-                                    }
-                                    sourceByte = 0;
-                                    break;
-                            }
-                        }
-                        else if (embedColor == Colors.White)
-                        {
-                            switch (sourceByte)
-                            {
-                                case 0:
-                                    sourceColor.R |= (1 << 0);
-                                    sourceByte = 1;
-                                    break;
-                                case 1:
-                                    sourceColor.G |= (1 << 0);
-                                    sourceByte = 2;
-                                    break;
-                                case 2:
-                                    sourceColor.B |= (1 << 0);
-                                    this.SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
-                                    sourceColor = this.GetPixelBgra8(sourcePixels, x, y, embedImageWidth, embedImageHeight);
-                                    if (x < embedImageWidth)
-                                    {
-                                        x++;
-                                    }
-                                    else
-                                    {
-                                        x = 0;
-                                    }
-                                    if (y < embedImageHeight)
-                                    {
-                                        y++;
-                                    }
-                                    if (x == embedImageWidth && y == embedImageHeight)
-                                    {
-                                        break;
-                                    }
-                                    sourceByte = 0;
-                                    
-                                    break;
-                            }
-
-                        }
-                    }
-
-                    
-
-                    
-                }
-            }
-        }
-
-
 
         private async Task<StorageFile> selectSourceImageFile()
         {
@@ -227,29 +73,12 @@ namespace ImageSandbox
             return newImage;
         }
 
-        public Color GetPixelBgra8(byte[] pixels, int x, int y, uint width, uint height)
+        private void saveButton_OnClick(object sender, RoutedEventArgs e)
         {
-            var offset = (x * (int) width + y) * 4;
-            var r = pixels[offset + 2];
-            var g = pixels[offset + 1];
-            var b = pixels[offset + 0];
-            return Color.FromArgb(0, r, g, b);
+            this.SaveWritableBitmap();
         }
 
-        public void SetPixelBgra8(byte[] pixels, int x, int y, Color color, uint width, uint height)
-        {
-            var offset = (x * (int) width + y) * 4;
-            pixels[offset + 2] = color.R;
-            pixels[offset + 1] = color.G;
-            pixels[offset + 0] = color.B;
-        }
-
-        private void saveButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.saveWritableBitmap();
-        }
-
-        private async void saveWritableBitmap()
+        private async void SaveWritableBitmap()
         {
             var fileSavePicker = new FileSavePicker {
                 SuggestedStartLocation = PickerLocationId.PicturesLibrary,
@@ -276,21 +105,36 @@ namespace ImageSandbox
             }
         }
 
-        private async  void embedFileButton_Click(object sender, RoutedEventArgs e)
+       
+        #endregion
+
+        private async void selectSourceImage_OnClick(object sender, RoutedEventArgs e)
         {
-            var sourceImageFile = await this.selectSourceImageFile();
-            var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
+            this.sourceImageFile = await this.selectSourceImageFile();
+            await UpdateImage(this.imageDisplay, this.sourceImageFile);
+            this.sourceImage = this.modifiedImage;
+        }
+        private async void selectImageToEmbedWith_OnClick(object sender, RoutedEventArgs e)
+        {
+            this.embedImageFile = await this.selectSourceImageFile();
+
+            await UpdateImage(this.embedDisplay, this.embedImageFile);
+            this.embedImage = this.modifiedImage;
+        }
+
+        private async void embedImageButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            
+            var copyBitmapImage = this.sourceImage;
 
             using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var transform = new BitmapTransform {
+                var transform = new BitmapTransform
+                {
                     ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
                     ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
                 };
-
-                this.dpiX = decoder.DpiX;
-                this.dpiY = decoder.DpiY;
 
                 var pixelData = await decoder.GetPixelDataAsync(
                     BitmapPixelFormat.Bgra8,
@@ -302,25 +146,16 @@ namespace ImageSandbox
 
                 var sourcePixels = pixelData.DetachPixelData();
 
-                
+                var embedcopyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(embedImageFile);
 
-                //////////
-                /// 
-                var embedImageFile = await this.selectSourceImageFile();
-                var embedcopyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
-                double dpx;
-                double dpy;
-
-                using (var embedfileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
+                using (var embedfileStream = await embedImageFile.OpenAsync(FileAccessMode.Read))
                 {
                     var embeddecoder = await BitmapDecoder.CreateAsync(embedfileStream);
-                    var embedtransform = new BitmapTransform {
+                    var embedtransform = new BitmapTransform
+                    {
                         ScaledWidth = Convert.ToUInt32(embedcopyBitmapImage.PixelWidth),
                         ScaledHeight = Convert.ToUInt32(embedcopyBitmapImage.PixelHeight)
                     };
-
-                    dpx = decoder.DpiX;
-                    dpy = decoder.DpiY;
 
                     var pixelData2 = await decoder.GetPixelDataAsync(
                         BitmapPixelFormat.Bgra8,
@@ -332,153 +167,29 @@ namespace ImageSandbox
 
                     var embedSourcePixels = pixelData2.DetachPixelData();
 
-                    this.embedImageWithImage(sourcePixels, embedSourcePixels,embeddecoder.PixelWidth, embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
+                    ImageEncryption.EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth, embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
 
-                    this.modifiedImage = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
+                    this.modifiedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
                     using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
                     {
                         await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
-                        this.imageDisplay.Source = this.modifiedImage;
+                        this.encryptedImage.Source = this.modifiedImage;
+                        this.ImageResult = this.modifiedImage;
                     }
                 }
 
             }
         }
-
-        private async void selectEmbedFileButton_Click(object sender, RoutedEventArgs e)
+       
+        private void extractImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-            var sourceImageFile = await this.selectSourceImageFile();
-            var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
-
-            using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
-            {
-                var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var transform = new BitmapTransform {
-                    ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
-                    ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
-                };
-
-                this.dpiX = decoder.DpiX;
-                this.dpiY = decoder.DpiY;
-
-                var pixelData = await decoder.GetPixelDataAsync(
-                    BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Straight,
-                    transform,
-                    ExifOrientationMode.IgnoreExifOrientation,
-                    ColorManagementMode.DoNotColorManage
-                );
-                var sourcePixels = pixelData.DetachPixelData();
-
-                this.embedImage = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
-                using (var writeStream = this.embedImage.PixelBuffer.AsStream())
-                {
-                    await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
-                    this.embedDisplay.Source = this.embedImage;
-                }
-                this.isEmbedSet = true;
-            }
+            throw new NotImplementedException();
         }
-
-        #endregion
-
-        private byte[] extractImageWithImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
+        
+        private async Task UpdateImage(Image imageToUpdate, StorageFile imageFile)
         {
-
-            byte[] imageExtract = new byte[sourcePixels.Length];
-            int y;
-            int x = y = 0;
-            Color sourceColor;
-
-            for (var i = 0; i < sourceImageHeight; i++)
-            {
-                for (var j = 0; j < sourceImageWidth; j++)
-                {
-                    if (i == 0 && j == 0)
-                    {
-                        sourceColor = this.GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
-                        if (!sourceColor.Equals(Color.FromArgb(160, 160, 160, 160)))
-                        {
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        int pix0 = sourceColor.R & 1;
-                        var color = this.GetBorW(pix0, sourceImageWidth, imageExtract, x, y);
-                        this.SetPixelBgra8(imageExtract, x , y, color, sourceImageWidth, sourceImageHeight);
-                        int pix1 = sourceColor.G & 1;
-                        if (x < sourceImageWidth)
-                        {
-                            x++;
-                        }
-                        else
-                        {
-                            x = 0;
-                        }
-
-                        if (y < sourceImageHeight)
-                        {
-                            y++;
-                        }
-                        else
-                        {
-                            y = 0;
-                        }
-
-
-                        color = this.GetBorW(pix1, sourceImageWidth, imageExtract, x, y);
-                        this.SetPixelBgra8(imageExtract, x, y, color, sourceImageWidth, sourceImageHeight);
-                        int pix2 = sourceColor.B & 1;
-                        if (x < sourceImageWidth)
-                        {
-                            x++;
-                        }
-                        else
-                        {
-                            x = 0;
-                        }
-
-                        if (y < sourceImageHeight)
-                        {
-                            y++;
-                        }
-                        else
-                        {
-                            y = 0;
-                        }
-                        color = this.GetBorW(pix2, sourceImageWidth, imageExtract, x, y);
-                        this.SetPixelBgra8(imageExtract, x, y, color, sourceImageWidth, sourceImageHeight);
-                        if (x < sourceImageWidth)
-                        {
-                            x++;
-                        }
-                        else
-                        {
-                            x = 0;
-                        }
-
-                        if (y < sourceImageHeight)
-                        {
-                            y++;
-                        }
-                        else
-                        {
-                            y = 0;
-                        }
-                    }
-                }
-            }
-
-            return imageExtract;
-
-        }
-
-        private async Task updateImage(Image imageToUpdate)
-        {
-            var sourceImageFile = await this.selectSourceImageFile();
-            var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(sourceImageFile);
-            using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
+            var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(imageFile);
+            using (var fileStream = await imageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
                 var transform = new BitmapTransform
@@ -497,15 +208,15 @@ namespace ImageSandbox
                     ExifOrientationMode.IgnoreExifOrientation,
                     ColorManagementMode.DoNotColorManage
                 );
-
+                
                 var sourcePixels = pixelData.DetachPixelData();
 
-                this.modifiedImage = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
-                await updateImageSource(sourcePixels, imageToUpdate, this.modifiedImage);
+                this.modifiedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
+                await UpdateImageSource(sourcePixels, imageToUpdate);
             }
         }
 
-        private async Task updateImageSource(byte[] sourcePixels, Image originalImage, WriteableBitmap updatedImage)
+        private async Task UpdateImageSource(byte[] sourcePixels, Image originalImage)
         {
             using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
             {
@@ -513,43 +224,9 @@ namespace ImageSandbox
                 originalImage.Source = this.modifiedImage;
             }
         }
-    
 
-        private Color GetBorW(int pix, uint sourceImageWidth, byte[] imageExtract, int x, int y)
-        {
-            if (pix == 0)
-            {
-                this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth, sourceImageWidth);
-                return Color.FromArgb(0,0,0,0);
-
-            }
-            this.SetPixelBgra8(imageExtract, x, y, Color.FromArgb(255, 255, 255, 255), sourceImageWidth, sourceImageWidth);
-            return Color.FromArgb(255, 255, 255, 255);
-        }
-      
-
-        private async void selectSourceImage_OnClick(object sender, RoutedEventArgs e)
-        {
-            await updateImage(this.imageDisplay);
-        }
-        private async void selectImageToEmbed_OnClick(object sender, RoutedEventArgs e)
-        {
-            await updateImage(this.embedDisplay);
-        }
-
-
-
+        //--------------------------------------------------------------------------------------------------------------//
         private void embedTextButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void embedImageButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void saveButton_OnClick(object sender, RoutedEventArgs e)
         {
             throw new NotImplementedException();
         }
@@ -558,10 +235,7 @@ namespace ImageSandbox
         {
             throw new NotImplementedException();
         }
-
-        private void extractImageButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
+        //--------------------------------------------------------------------------------------------------------------//
+       
     }
 }
