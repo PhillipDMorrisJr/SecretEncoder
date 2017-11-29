@@ -104,9 +104,7 @@ namespace ImageSandbox
                 stream.Dispose();
             }
         }
-
-       
-        #endregion
+        
 
         private async void selectSourceImage_OnClick(object sender, RoutedEventArgs e)
         {
@@ -167,7 +165,7 @@ namespace ImageSandbox
 
                     var embedSourcePixels = pixelData2.DetachPixelData();
 
-                    ImageEncryption.EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth, embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
+                    ImageEmbedder.EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth, embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
 
                     this.modifiedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
                     using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
@@ -236,6 +234,7 @@ namespace ImageSandbox
             throw new NotImplementedException();
         }
         //--------------------------------------------------------------------------------------------------------------//
-       
+
     }
+    #endregion
 }
