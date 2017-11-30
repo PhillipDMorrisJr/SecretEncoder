@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 
-namespace ImageSandbox.Model.Encryption
+namespace ImageSandbox.Utilities.Encryption
 {
     /// <summary>
     ///     Encrypts text into an image.

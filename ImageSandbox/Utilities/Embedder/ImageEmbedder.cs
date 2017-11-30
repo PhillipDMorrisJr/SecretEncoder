@@ -6,13 +6,22 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.UI;
 
-namespace ImageSandbox.Model.Encryption
+namespace ImageSandbox.Utilities.Embedder
 {
     /// <summary>
     /// Encrypts an image into an image.
     /// </summary>
     public static class ImageEmbedder
     {
+        /// <summary>
+        /// Embeds the image with image.
+        /// </summary>
+        /// <param name="sourcePixels">The source pixels.</param>
+        /// <param name="embedPixels">The embed pixels.</param>
+        /// <param name="embedImageWidth">Width of the embed image.</param>
+        /// <param name="embedImageHeight">Height of the embed image.</param>
+        /// <param name="sourceImageWidth">Width of the source image.</param>
+        /// <param name="sourceImageHeight">Height of the source image.</param>
         public static void EmbedImageWithImage(byte[] sourcePixels, byte[] embedPixels, uint embedImageWidth, uint embedImageHeight, uint sourceImageWidth, uint sourceImageHeight)
         {
             Color sourceColor = Color.FromArgb(119, 119, 119, 119);
@@ -28,35 +37,35 @@ namespace ImageSandbox.Model.Encryption
                 {
                     if (x == 0 && y == 0)
                     {
-                        SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
+                        setPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
                     }
                     else if (x == 1 && y == 0)
                     {
-                        sourceColor = GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                        sourceColor = getPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                         sourceColor.R |= (0 << 0);
-                        SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
+                        setPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
                     }
                     else
                     {
-                        var embedColor = GetPixelBgra8(embedPixels, x, y, embedImageWidth, embedImageHeight);
+                        var embedColor = getPixelBgra8(embedPixels, x, y, embedImageWidth, embedImageHeight);
                         if (embedColor.Equals(Colors.Black))
                         {
-                            sourceColor = GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                            sourceColor = getPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                             sourceColor.B |= (0 << 0);
-                            SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
+                            setPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
                         }
                         else
                         {
-                            sourceColor = GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                            sourceColor = getPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                             sourceColor.B |= (1 << 0);
-                            SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
+                            setPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
                         }
                     }
                 }
             }
         }
 
-        private static Color GetPixelBgra8(byte[] pixels, int x, int y, uint width, uint height)
+        private static Color getPixelBgra8(byte[] pixels, int x, int y, uint width, uint height)
         {
             var offset = (x * (int)width + y) * 4;
             if (offset + 2 >= pixels.Length)
@@ -72,7 +81,7 @@ namespace ImageSandbox.Model.Encryption
             
         }
 
-        private static void SetPixelBgra8(byte[] pixels, int x, int y, Color color, uint width, uint height)
+        private static void setPixelBgra8(byte[] pixels, int x, int y, Color color, uint width, uint height)
         {
 
                 var offset = (x * (int) width + y) * 4;
@@ -87,7 +96,14 @@ namespace ImageSandbox.Model.Encryption
 
         }
 
-       public static byte[] ExtractImageWithImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
+        /// <summary>
+        /// Extracts the image with image.
+        /// </summary>
+        /// <param name="sourcePixels">The source pixels.</param>
+        /// <param name="sourceImageWidth">Width of the source image.</param>
+        /// <param name="sourceImageHeight">Height of the source image.</param>
+        /// <returns></returns>
+        public static byte[] ExtractImageWithImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
         {
             byte[] imageExtract = new byte[sourcePixels.Length];
 
@@ -100,32 +116,32 @@ namespace ImageSandbox.Model.Encryption
                     switch (i)
                     {
                         case 0 when j == 0:
-                            sourceColor = GetPixelBgra8(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
-                           
+                            sourceColor = getPixelBgra8(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
+
                             break;
                         case 1 when j == 0:
                             int bitVal0 = sourceColor.R & 1;
                             if (bitVal0 == 1)
                             {
-                               // throw new ArgumentException("This file should use text extraction");
+                                // throw new ArgumentException("This file should use text extraction");
                                 //TODO: Call text Extraction
-                             
+
                             }
                             break;
                         default:
-                            
-                            sourceColor = GetPixelBgra8(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
-                            
+
+                            sourceColor = getPixelBgra8(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
+
                             int bitVal = sourceColor.B & 1;
                             if (bitVal == 0)
                             {
-                                SetPixelBgra8(imageExtract, i, j, Colors.Black, sourceImageWidth, sourceImageHeight);
+                                setPixelBgra8(imageExtract, i, j, Colors.Black, sourceImageWidth, sourceImageHeight);
                             }
                             else
                             {
-                                SetPixelBgra8(imageExtract, i, j,  Colors.White, sourceImageWidth, sourceImageHeight);
+                                setPixelBgra8(imageExtract, i, j, Colors.White, sourceImageWidth, sourceImageHeight);
                             }
-                            
+
                             break;
                     }
                 }

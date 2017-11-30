@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ImageSandbox.Model.Decryption
+namespace ImageSandbox.Utilities.Decryption
 {
     /// <summary>
     /// Decrypts an image from an image.
