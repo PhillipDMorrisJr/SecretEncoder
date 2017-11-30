@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ImageSandbox.Model.Decryption
 {
     /// <summary>
-    /// 
+    /// Decrypts an image from an image.
     /// </summary>
     public class ImageDecryption
     {

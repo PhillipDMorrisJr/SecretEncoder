@@ -10,10 +10,10 @@ namespace ImageSandbox.Model.Decoder
 {
     public static class ImageDecoder
     {
-        public static void decodeImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
+        public static void DecodeImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
         {
 
-            Color sourceColor = Color.FromArgb(119, 119, 119, 119);
+            /*Color sourceColor = Color.FromArgb(119, 119, 119, 119);
             for (int y = 0; y < sourceImageHeight; y++)
             {
                 for (int x = 0; x < sourceImageWidth; x++)
@@ -49,7 +49,7 @@ namespace ImageSandbox.Model.Decoder
                         }
                     }
                 }
-            }
+            }*/
         }
     }
 }

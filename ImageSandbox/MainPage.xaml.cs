@@ -10,12 +10,13 @@ using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
+using ImageSandbox.Model.Encoder;
 using ImageSandbox.Model.Encryption;
 
 namespace ImageSandbox
 {
     /// <summary>
-    ///     An empty page that can be used on its own or navigated to within a Frame.
+    /// Application main page.
     /// </summary>
     public sealed partial class MainPage : Page
     {
@@ -56,7 +57,6 @@ namespace ImageSandbox
                 ViewMode = PickerViewMode.Thumbnail,
                 SuggestedStartLocation = PickerLocationId.PicturesLibrary
             };
-            openPicker.FileTypeFilter.Add(".jpg");
             openPicker.FileTypeFilter.Add(".png");
             openPicker.FileTypeFilter.Add(".bmp");
 
@@ -109,14 +109,15 @@ namespace ImageSandbox
         private async void selectSourceImage_OnClick(object sender, RoutedEventArgs e)
         {
             this.sourceImageFile = await this.selectSourceImageFile();
-            await UpdateImage(this.imageDisplay, this.sourceImageFile);
+            await this.UpdateImage(this.imageDisplay, this.sourceImageFile);
             this.sourceImage = this.modifiedImage;
         }
+
         private async void selectImageToEmbedWith_OnClick(object sender, RoutedEventArgs e)
         {
             this.embedImageFile = await this.selectSourceImageFile();
 
-            await UpdateImage(this.embedDisplay, this.embedImageFile);
+            await this.UpdateImage(this.embedDisplay, this.embedImageFile);
             this.embedImage = this.modifiedImage;
         }
 
@@ -125,7 +126,7 @@ namespace ImageSandbox
             
             var copyBitmapImage = this.sourceImage;
 
-            using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
+            using (var fileStream = await this.sourceImageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
                 var transform = new BitmapTransform
