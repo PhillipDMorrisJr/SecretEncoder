@@ -180,12 +180,43 @@ namespace ImageSandbox
             }
         }
        
-        private void extractImageButton_OnClick(object sender, RoutedEventArgs e)
+        private async void extractImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
-        }
-        
-        private async Task UpdateImage(Image imageToUpdate, StorageFile imageFile)
+            var copyBitmapImage = this.sourceImage;
+
+            using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
+            {
+                var decoder = await BitmapDecoder.CreateAsync(fileStream);
+                var transform = new BitmapTransform
+                {
+                    ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
+                    ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
+                };
+
+                var pixelData = await decoder.GetPixelDataAsync(
+                    BitmapPixelFormat.Bgra8,
+                    BitmapAlphaMode.Straight,
+                    transform,
+                    ExifOrientationMode.IgnoreExifOrientation,
+                    ColorManagementMode.DoNotColorManage
+                );
+
+                var sourcePixels = pixelData.DetachPixelData();
+
+                byte[] extractedPixels = ImageEmbedder.ExtractImageWithImage(sourcePixels, decoder.PixelWidth, decoder.PixelHeight);
+
+                    this.modifiedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
+                    using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
+                    {
+                        await writeStream.WriteAsync(extractedPixels, 0, extractedPixels.Length);
+                        this.encryptedImage.Source = this.modifiedImage;
+                        this.ImageResult = this.modifiedImage;
+                    }
+                }
+            }
+
+
+  private async Task UpdateImage(Image imageToUpdate, StorageFile imageFile)
         {
             var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(imageFile);
             using (var fileStream = await imageFile.OpenAsync(FileAccessMode.Read))
@@ -223,6 +254,28 @@ namespace ImageSandbox
                 originalImage.Source = this.modifiedImage;
             }
         }
+
+
+
+
+        
+        
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         //--------------------------------------------------------------------------------------------------------------//
         private void embedTextButton_OnClick(object sender, RoutedEventArgs e)
