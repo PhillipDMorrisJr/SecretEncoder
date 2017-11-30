@@ -39,7 +39,7 @@ namespace ImageSandbox.Model.Encryption
                     else
                     {
                         var embedColor = GetPixelBgra8(embedPixels, x, y, embedImageWidth, embedImageHeight);
-                        if (embedColor == Colors.Black)
+                        if (embedColor.Equals(Colors.Black))
                         {
                             sourceColor = GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                             sourceColor.B |= (0 << 0);
@@ -117,8 +117,15 @@ namespace ImageSandbox.Model.Encryption
                             sourceColor = GetPixelBgra8(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
                             
                             int bitVal = sourceColor.B & 1;
-                            SetPixelBgra8(imageExtract, i, j, bitVal == 0 ? Colors.Black : Colors.White,
-                                sourceImageWidth, sourceImageHeight);
+                            if (bitVal == 0)
+                            {
+                                SetPixelBgra8(imageExtract, i, j, Colors.Black, sourceImageWidth, sourceImageHeight);
+                            }
+                            else
+                            {
+                                SetPixelBgra8(imageExtract, i, j,  Colors.White, sourceImageWidth, sourceImageHeight);
+                            }
+                            
                             break;
                     }
                 }
