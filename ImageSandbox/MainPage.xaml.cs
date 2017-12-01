@@ -10,8 +10,9 @@ using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
-using ImageSandbox.Model.Encoder;
-using ImageSandbox.Model.Encryption;
+using ImageSandbox.Utilities;
+using ImageSandbox.Utilities.Embedder;
+
 
 namespace ImageSandbox
 {
@@ -125,61 +126,48 @@ namespace ImageSandbox
         {
             
             var copyBitmapImage = this.sourceImage;
-
+            var embedcopyBitmapImage = this.embedImage;
             using (var fileStream = await this.sourceImageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var transform = new BitmapTransform
-                {
-                    ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
-                    ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
-                };
-
-                var pixelData = await decoder.GetPixelDataAsync(
-                    BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Straight,
-                    transform,
-                    ExifOrientationMode.IgnoreExifOrientation,
-                    ColorManagementMode.DoNotColorManage
-                );
+                var pixelData = await PixelDataProvider(copyBitmapImage, decoder);
 
                 var sourcePixels = pixelData.DetachPixelData();
-
-                var embedcopyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(embedImageFile);
 
                 using (var embedfileStream = await embedImageFile.OpenAsync(FileAccessMode.Read))
                 {
                     var embeddecoder = await BitmapDecoder.CreateAsync(embedfileStream);
-                    var embedtransform = new BitmapTransform
-                    {
-                        ScaledWidth = Convert.ToUInt32(embedcopyBitmapImage.PixelWidth),
-                        ScaledHeight = Convert.ToUInt32(embedcopyBitmapImage.PixelHeight)
-                    };
-
-                    var pixelData2 = await decoder.GetPixelDataAsync(
-                        BitmapPixelFormat.Bgra8,
-                        BitmapAlphaMode.Straight,
-                        embedtransform,
-                        ExifOrientationMode.IgnoreExifOrientation,
-                        ColorManagementMode.DoNotColorManage
-                    );
+                    var pixelData2 = await PixelDataProvider(embedcopyBitmapImage, decoder);
 
                     var embedSourcePixels = pixelData2.DetachPixelData();
 
-                    ImageEmbedder.EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth, embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
+                    byte[] sourceCopy = ImageEmbedder.EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth, embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
 
                     this.modifiedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
-                    using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
-                    {
-                        await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
-                        this.encryptedImage.Source = this.modifiedImage;
-                        this.ImageResult = this.modifiedImage;
-                    }
+                    await UpdateImageSource(sourceCopy, this.encryptedImage);
                 }
 
             }
         }
-       
+
+        private static async Task<PixelDataProvider> PixelDataProvider(WriteableBitmap copyBitmapImage, BitmapDecoder decoder)
+        {
+            var transform = new BitmapTransform
+            {
+                ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
+                ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
+            };
+
+            var pixelData = await decoder.GetPixelDataAsync(
+                BitmapPixelFormat.Bgra8,
+                BitmapAlphaMode.Straight,
+                transform,
+                ExifOrientationMode.IgnoreExifOrientation,
+                ColorManagementMode.DoNotColorManage
+            );
+            return pixelData;
+        }
+
         private async void extractImageButton_OnClick(object sender, RoutedEventArgs e)
         {
             var copyBitmapImage = this.sourceImage;
@@ -216,7 +204,7 @@ namespace ImageSandbox
             }
 
 
-  private async Task UpdateImage(Image imageToUpdate, StorageFile imageFile)
+        private async Task UpdateImage(Image imageToUpdate, StorageFile imageFile)
         {
             var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(imageFile);
             using (var fileStream = await imageFile.OpenAsync(FileAccessMode.Read))
@@ -254,26 +242,6 @@ namespace ImageSandbox
                 originalImage.Source = this.modifiedImage;
             }
         }
-
-
-
-
-        
-        
-      
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
