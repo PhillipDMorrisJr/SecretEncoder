@@ -9,22 +9,28 @@ namespace ImageSandbox.Utilities.Encryption
     public class TextEncryption
     {
         #region Methods
-
+        
         /// <summary>
-        ///     Encrypts and decrypts the text using ROT13.
+        /// Encrypts the decrypt text.
         /// </summary>
+        /// <param name="textToCrypt">The text to crypt.</param>
+        /// <param name="rotation">The rotation.</param>
         /// <returns></returns>
-        public string CryptText(string textToCrypt)
+        public string EncryptDecryptText(string textToCrypt, int rotation)
         {
             var result = new StringBuilder();
             var regex = new Regex("[A-Za-z]");
 
             foreach (var currentChar in textToCrypt)
             {
-                if (regex.IsMatch(currentChar.ToString()))
+                if (currentChar >= 'a' && currentChar <= 'm' || currentChar >= 'A' && currentChar <= 'M')
                 {
-                    var charCode = ((currentChar & 223) - 52) % 26 + (currentChar & 32) + 65;
-                    result.Append((char) charCode);
+                    result.Append((char)((int)currentChar + rotation));
+
+                }
+                else if (currentChar >= 'n' && currentChar <= 'z' || currentChar >= 'N' && currentChar <= 'Z')
+                {
+                    result.Append((char)((int)currentChar - rotation));
                 }
                 else
                 {
@@ -32,6 +38,20 @@ namespace ImageSandbox.Utilities.Encryption
                 }
             }
 
+            return result.ToString();
+        }
+
+        /// <summary>
+        /// Adds the end of message sequence marker.
+        /// </summary>
+        /// <param name="cipherText">The cipher text.</param>
+        /// <returns></returns>
+        public string AddEndOfMessageSequence(string cipherText)
+        {
+            var result = new StringBuilder();
+
+            result.Append("!EOM!");
+            
             return result.ToString();
         }
 
