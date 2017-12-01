@@ -19,7 +19,6 @@ namespace ImageSandbox.Utilities.Encryption
         public string EncryptDecryptText(string textToCrypt, int rotation)
         {
             var result = new StringBuilder();
-            var regex = new Regex("[A-Za-z]");
 
             foreach (var currentChar in textToCrypt)
             {
