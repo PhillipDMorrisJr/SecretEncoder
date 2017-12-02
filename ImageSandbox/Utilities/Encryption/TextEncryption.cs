@@ -47,6 +47,7 @@ namespace ImageSandbox.Utilities.Encryption
         {
             var result = new StringBuilder();
 
+            result.Append(cipherText);
             result.Append("!EOM!");
 
             return result.ToString();
