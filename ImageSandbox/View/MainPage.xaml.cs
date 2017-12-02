@@ -147,14 +147,14 @@ namespace ImageSandbox
             await notImageEncryptedDialog.ShowAsync();
         }
         //--------------------------------------------------------------------------------------------------------------//
-        private void embedTextButton_OnClick(object sender, RoutedEventArgs e)
+        private async void embedTextButton_OnClick(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            await CustomDialog("Functionality not implemeted");
         }
 
-        private void extractTextButton_OnClick(object sender, RoutedEventArgs e)
+        private async void extractTextButton_OnClick(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            await CustomDialog("Functionality not implemeted");
         }
         //--------------------------------------------------------------------------------------------------------------//
 
