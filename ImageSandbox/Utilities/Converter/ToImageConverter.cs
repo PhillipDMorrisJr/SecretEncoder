@@ -14,10 +14,10 @@ namespace ImageSandbox.Utilities
 {
     public static class ToImageConverter
     {
-        private static WriteableBitmap _modifiedImage;
 
         public static async Task<Image> Convert(StorageFile imageFile, Image originalImage)
         {
+            WriteableBitmap bitmap;
             var copyBitmapImage = await MakeACopyOfTheFileToWorkOn(imageFile);
             using (var fileStream = await imageFile.OpenAsync(FileAccessMode.Read))
             {
@@ -38,18 +38,18 @@ namespace ImageSandbox.Utilities
 
                 var sourcePixels = pixelData.DetachPixelData();
 
-                _modifiedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
-                Image convertedImage = await Convert(sourcePixels, originalImage);
+                bitmap = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
+                Image convertedImage = await Convert(sourcePixels, originalImage, bitmap);
                 return convertedImage;
             }
         }
 
-        private static async Task<Image> Convert(byte[] sourcePixels, Image originalImage)
+        public static async Task<Image> Convert(byte[] sourcePixels, Image originalImage, WriteableBitmap bitmap)
         {
-            using (var writeStream = _modifiedImage.PixelBuffer.AsStream())
+            using (var writeStream = bitmap.PixelBuffer.AsStream())
             {
                 await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
-                originalImage.Source = _modifiedImage;
+                originalImage.Source = bitmap;
             }
             return originalImage;
 

@@ -21,6 +21,6 @@
         <Button x:Name="saveEncryptedImageButton" Content="Save Encrypted Image" HorizontalAlignment="Left" Margin="336,318,0,0" VerticalAlignment="Top" Click="saveButton_OnClick" Width="215"/>
         <Button x:Name="embedButton" Content="Embed Image" HorizontalAlignment="Left" Margin="614,355,0,0" VerticalAlignment="Top" Click="embedImageButton_OnClick" Width="210"/>
         <Button x:Name="selectImageSource" Content="Select Source" HorizontalAlignment="Left" Margin="63,318,0,0" VerticalAlignment="Top" Click="selectSourceImage_OnClick" Width="215"/>
-
+        <Button x:Name="imageEncryptionButton" Content="Encrypt Image" HorizontalAlignment="Left" Margin="63,429,0,0" VerticalAlignment="Top" Click="encryptImageButton_OnClick" Width="215"/> 
     </Grid>
 </Page>

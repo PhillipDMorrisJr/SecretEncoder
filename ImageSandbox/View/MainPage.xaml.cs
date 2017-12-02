@@ -14,6 +14,7 @@ using Windows.UI.Xaml.Media.Imaging;
 using ImageSandbox.Utilities;
 using ImageSandbox.Utilities.Converter;
 using ImageSandbox.Utilities.Embedder;
+using ImageSandbox.Utilities.Encryption;
 using ImageSandbox.Utilities.Retriever;
 
 
@@ -26,14 +27,11 @@ namespace ImageSandbox
     {
         #region Data members
 
-        private WriteableBitmap modifiedImage;
         private WriteableBitmap embedImage;
         private WriteableBitmap imageResult;
         private WriteableBitmap sourceImage;
         private StorageFile sourceImageFile;
         private StorageFile embedImageFile;
-
-        private bool isEmbedSet;
 
         #endregion
 
@@ -41,10 +39,7 @@ namespace ImageSandbox
 
         public MainPage()
         {
-            this.isEmbedSet = false;
             this.InitializeComponent();
-
-            this.modifiedImage = null;
         }
 
         #endregion
@@ -123,7 +118,7 @@ namespace ImageSandbox
     
         private async void embedImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-           this.encryptedImage = await ImageEmbedder.EmbedImage(this.sourceImage, this.embedImage, sourceImageFile, embedImageFile);
+           this.encryptedImage = await ImageEmbedder.EmbedImage(this.sourceImage, this.embedImage, sourceImageFile, embedImageFile, new Image());
            this.imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(this.encryptedImage);
         }
 
@@ -149,6 +144,12 @@ namespace ImageSandbox
         }
         //--------------------------------------------------------------------------------------------------------------//
 
+        private async void encryptImageButton_OnClick(object sender, RoutedEventArgs e)
+        {
+           var stuff = await ImageEncryption.EncryptAsync(this.imageDisplay, sourceImageFile);
+
+           this.imageDisplay = await ToImageConverter.Convert(stuff, this.imageDisplay, sourceImage);
+        }
     }
     #endregion
 }
