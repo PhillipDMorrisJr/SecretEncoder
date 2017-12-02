@@ -38,63 +38,63 @@ namespace ImageSandbox.Utilities.Encryption
 
 
                 var sourcePixels = pixelData.DetachPixelData();
-                var writeableBitmap = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
 
-                var quadrant1 = new byte[sourcePixels.Length / 4];
-                var quadrant2 = new byte[sourcePixels.Length / 4];
-                var quadrant3 = new byte[sourcePixels.Length / 4];
-                var quadrant4 = new byte[sourcePixels.Length / 4];
-                Color currentColor;
-                for (var y = 0; y < (int) decoder.PixelHeight / 2; y++)
-                for (var x = 0; x < (int) decoder.PixelWidth / 2; x++)
-                {
-                    currentColor =
-                        PixelRetriever.RetrieveColor(sourcePixels, x, y, decoder.PixelWidth, decoder.PixelHeight);
-                    PixelRetriever.ModifyPixel(quadrant1, x, y, currentColor, decoder.PixelWidth);
-                }
-                for (var y = 0; y < (int) decoder.PixelHeight / 2; y++)
-                for (var x = (int) decoder.PixelWidth / 2; x < (int) decoder.PixelHeight; x++)
-                {
-                    currentColor =
-                        PixelRetriever.RetrieveColor(sourcePixels, x, y, decoder.PixelWidth, decoder.PixelHeight);
-                    PixelRetriever.ModifyPixel(quadrant2, x, y, currentColor, decoder.PixelWidth);
-                }
-
-                for (var y = (int) decoder.PixelHeight / 2; y < (int) decoder.PixelHeight; y++)
-                for (var x = (int) decoder.PixelWidth / 2; x < (int) decoder.PixelHeight; x++)
-                {
-                    currentColor =
-                        PixelRetriever.RetrieveColor(sourcePixels, x, y, decoder.PixelWidth, decoder.PixelHeight);
-                    PixelRetriever.ModifyPixel(quadrant3, x, y, currentColor, decoder.PixelWidth);
-                }
-
-
-                for (var y = (int) decoder.PixelHeight / 2; y < (int) decoder.PixelHeight; y++)
-                for (var x = 0; x < (int) decoder.PixelWidth / 2; x++)
-                {
-                    currentColor =
-                        PixelRetriever.RetrieveColor(sourcePixels, x, y, decoder.PixelWidth, decoder.PixelHeight);
-                    PixelRetriever.ModifyPixel(quadrant4, x, y, currentColor, decoder.PixelWidth);
-                }
-
-
-                var quadrants = new List<byte[]>
-                {
-                    quadrant1,
-                    quadrant2,
-                    quadrant3,
-                    quadrant4
-                };
-                var encryptedImage = new byte[sourcePixels.Length];
-                var ecryptionIndex = 0;
-                foreach (var qaudrant in quadrants)
-                foreach (var pixel in qaudrant)
-                {
-                    encryptedImage[ecryptionIndex] = pixel;
-                    ecryptionIndex++;
-                }
+                var encryptedImage = Encrypt(sourcePixels, decoder);
                 return encryptedImage;
             }
         }
+
+        private static byte[] Encrypt(byte[] sourcePixels, BitmapDecoder decoder)
+        {
+            var quadrantSize = sourcePixels.Length / 4;
+            var quadrant1 = new byte[quadrantSize];
+            var quadrant2 = new byte[quadrantSize];
+            var quadrant3 = new byte[quadrantSize];
+            var quadrant4 = new byte[quadrantSize];
+
+         
+            var halfHeight = (int) decoder.PixelHeight / 2;
+            var halfWidth = (int)decoder.PixelWidth / 2;
+            var maxHeight = (int)decoder.PixelHeight;
+            var maxWidth = (int)decoder.PixelWidth;
+
+           quadrant1 = GroupPixels(sourcePixels, quadrant1, 0, halfWidth, 0, halfHeight, decoder.PixelWidth, decoder.PixelHeight);
+           quadrant2 = GroupPixels(sourcePixels, quadrant2, halfWidth, maxWidth, 0, halfHeight, decoder.PixelWidth, decoder.PixelHeight);
+            quadrant3 = GroupPixels(sourcePixels, quadrant3, 0, halfWidth, halfHeight, maxHeight, decoder.PixelWidth, decoder.PixelHeight);
+            quadrant4 = GroupPixels(sourcePixels, quadrant4, halfWidth, maxWidth, halfHeight, maxHeight, decoder.PixelWidth, decoder.PixelHeight);
+            
+
+            var quadrants = new List<byte[]>
+            {
+                quadrant1,
+                quadrant2,
+                quadrant3,
+                quadrant4
+            };
+
+            var encryptedImage = new byte[sourcePixels.Length];
+            var ecryptionIndex = 0;
+            foreach (var qaudrant in quadrants)
+            foreach (var pixel in qaudrant)
+            {
+                encryptedImage[ecryptionIndex] = pixel;
+                ecryptionIndex++;
+            }
+            return encryptedImage;
+        }
+
+
+
+        private static byte[] GroupPixels(byte[] sourcePixels, byte[] quadrantPixels, int startX, int endX, int startY, int endY, uint width, uint height)
+        {
+            for (var y = startY; y < endY; y++)
+            for (var x = startX; x < endX; x++)
+            {
+                var currentColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, width, height);
+                PixelRetriever.ModifyPixel(quadrantPixels, x, y, currentColor, width);
+            }
+            return sourcePixels;
+        }
+
     }
 }

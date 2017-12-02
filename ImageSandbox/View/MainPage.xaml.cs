@@ -94,7 +94,7 @@ namespace ImageSandbox
             }
         }
 
-        //--------------------------------------------------------------//
+        
 
         private async void selectSourceImage_OnClick(object sender, RoutedEventArgs e)
         {
@@ -103,14 +103,14 @@ namespace ImageSandbox
             _sourceImage = WriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay);
         }
 
-        //---------------------------------------
+        
         private async void selectImageToEmbedWith_OnClick(object sender, RoutedEventArgs e)
         {
             _embedImageFile = await SelectSourceImageFile();
             EmbedDisplay = await ToImageConverter.Convert(_embedImageFile, EmbedDisplay);
             _embedImage = WriteableBitmapConverter.ConvertToWriteableBitmap(EmbedDisplay);
         }
-        //----------------------------------------------------------
+        
 
         private async void embedImageButton_OnClick(object sender, RoutedEventArgs e)
         {
@@ -146,7 +146,7 @@ namespace ImageSandbox
             };
             await notImageEncryptedDialog.ShowAsync();
         }
-        //--------------------------------------------------------------------------------------------------------------//
+
         private async void embedTextButton_OnClick(object sender, RoutedEventArgs e)
         {
             await CustomDialog("Functionality not implemeted");
@@ -156,7 +156,7 @@ namespace ImageSandbox
         {
             await CustomDialog("Functionality not implemeted");
         }
-        //--------------------------------------------------------------------------------------------------------------//
+
 
         private async void encryptImageButton_OnClick(object sender, RoutedEventArgs e)
         {
