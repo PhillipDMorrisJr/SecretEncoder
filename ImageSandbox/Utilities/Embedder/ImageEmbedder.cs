@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
@@ -15,10 +16,48 @@ namespace ImageSandbox.Utilities.Embedder
     /// </summary>
     public static class ImageEmbedder
     {
-        public static async Task<Image> EmbedImageWithImage2(WriteableBitmap sourceImage, StorageFile sourceImageFile,
-            WriteableBitmap embedImage, StorageFile embedImageFile, Image display)
+        /// <summary>
+        /// Embeds the image.
+        /// </summary>
+        /// <param name="sourceImage">The source image.</param>
+        /// <param name="imageToEmbed">The image to embed.</param>
+        /// <returns></returns>
+        public static async Task<Image> EmbedImage(WriteableBitmap sourceImage, WriteableBitmap imageToEmbed)
         {
-            using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
+            Image embededImage;
+
+            using (var fileStream = sourceImage.PixelBuffer.AsStream().AsRandomAccessStream())
+            {
+                var decoder = await BitmapDecoder.CreateAsync(fileStream);
+                var sourcePixelData = await PixelDataProvider(sourceImage, decoder);
+
+                var sourcePixels = sourcePixelData.DetachPixelData();
+
+                using (var embedfileStream = imageToEmbed.PixelBuffer.AsStream().AsRandomAccessStream())
+                {
+                    var embeddecoder = await BitmapDecoder.CreateAsync(embedfileStream);
+                    var imageToEmbedPixelData = await PixelDataProvider(imageToEmbed, decoder);
+
+                    var embedSourcePixels = imageToEmbedPixelData.DetachPixelData();
+
+                    byte[] sourceCopy = ImageEmbedder.EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth, embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
+
+                    embededImage = await ImageConverter.ConvertToImage(sourceCopy);
+                }
+            }
+            return embededImage;
+        }
+
+
+        /// <summary>
+        /// Extracts the hidden image.
+        /// </summary>
+        /// <param name="sourceImage">The source image.</param>
+        /// <returns></returns>
+        public static async Task<Image> ExtractHiddenImage(WriteableBitmap sourceImage)
+        {
+            Image hiddenImage = new Image();
+            using (var fileStream = sourceImage.PixelBuffer.AsStream().AsRandomAccessStream())
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
                 var transform = new BitmapTransform
@@ -37,92 +76,89 @@ namespace ImageSandbox.Utilities.Embedder
 
                 var sourcePixels = pixelData.DetachPixelData();
 
-                var embedcopyBitmapImage = await MakeACopyOfTheFileToWorkOn(embedImageFile);
+                byte[] extractedPixels =
+                    ImageEmbedder.ExtractImageWithImage(sourcePixels, decoder.PixelWidth, decoder.PixelHeight);
 
-                using (var embedfileStream = await embedImageFile.OpenAsync(FileAccessMode.Read))
+                var tempBitmap = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
+                using (var writeStream = tempBitmap.PixelBuffer.AsStream())
                 {
-                    var embeddecoder = await BitmapDecoder.CreateAsync(embedfileStream);
-                    var embedtransform = new BitmapTransform
-                    {
-                        ScaledWidth = Convert.ToUInt32(embedcopyBitmapImage.PixelWidth),
-                        ScaledHeight = Convert.ToUInt32(embedcopyBitmapImage.PixelHeight)
-                    };
-
-                    var pixelData2 = await embeddecoder.GetPixelDataAsync(
-                        BitmapPixelFormat.Bgra8,
-                        BitmapAlphaMode.Straight,
-                        embedtransform,
-                        ExifOrientationMode.IgnoreExifOrientation,
-                        ColorManagementMode.DoNotColorManage
-                    );
-
-                    var embedSourcePixels = pixelData2.DetachPixelData();
-
-                    EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth,
-                        embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
-
-                    var image = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
-                    using (var writeStream = image.PixelBuffer.AsStream())
-                    {
-                        await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
-                        display.Source = image;
-                    }
+                    await writeStream.WriteAsync(extractedPixels, 0, extractedPixels.Length);
+                    hiddenImage.Source = tempBitmap;
                 }
             }
-            return display;
+            return hiddenImage;
         }
 
+        private static async Task<PixelDataProvider> PixelDataProvider(WriteableBitmap copyBitmapImage, BitmapDecoder decoder)
+        {
+            var transform = new BitmapTransform
+            {
+                ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
+                ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
+            };
+
+            var pixelData = await decoder.GetPixelDataAsync(
+                BitmapPixelFormat.Bgra8,
+                BitmapAlphaMode.Straight,
+                transform,
+                ExifOrientationMode.IgnoreExifOrientation,
+                ColorManagementMode.DoNotColorManage
+            );
+            return pixelData;
+        }
         /// <summary>
         ///     Embeds the image with image.
         /// </summary>
-        /// <param name="sourcePixels">The source pixels.</param>
-        /// <param name="embedPixels">The embed pixels.</param>
-        /// <param name="embedImageWidth">Width of the embed image.</param>
-        /// <param name="embedImageHeight">Height of the embed image.</param>
-        /// <param name="sourceImageWidth">Width of the source image.</param>
-        /// <param name="sourceImageHeight">Height of the source image.</param>
+        /// <param name="sourcePixels">The sourceImage pixels.</param>
+        /// <param name="embedPixels">The imageToEmbed pixels.</param>
+        /// <param name="embedImageWidth">Width of the imageToEmbed image.</param>
+        /// <param name="embedImageHeight">Height of the imageToEmbed image.</param>
+        /// <param name="sourceImageWidth">Width of the sourceImage image.</param>
+        /// <param name="sourceImageHeight">Height of the sourceImage image.</param>
         public static byte[] EmbedImageWithImage(byte[] sourcePixels, byte[] embedPixels, uint embedImageWidth,
             uint embedImageHeight, uint sourceImageWidth, uint sourceImageHeight)
         {
             var sourceColor = Color.FromArgb(119, 119, 119, 119);
 
-            if (embedImageWidth > sourceImageWidth || embedImageHeight > sourceImageHeight)
-                return null;
+            if (embedImageWidth > sourceImageWidth || embedImageHeight > sourceImageHeight) { return null; }
+
 
             for (var y = 0; y < embedImageHeight; y++)
-            for (var x = 0; x < embedImageWidth; x++)
-                if (x == 0 && y == 0)
-                {
-                    setPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
-                }
-                else if (x == 1 && y == 0)
-                {
-                    sourceColor = getPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
-                    sourceColor.R |= 0 << 0;
-                    setPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
-                }
-                else
-                {
-                    var embedColor = getPixelBgra8(embedPixels, x, y, embedImageWidth, embedImageHeight);
-                    if (embedColor.Equals(Colors.Black))
+            {
+                for (var x = 0; x < embedImageWidth; x++)
+                    if (x == 0 && y == 0)
                     {
-                        sourceColor = getPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
-                        sourceColor.B |= 0 << 0;
-                        setPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
+                        SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
+                    }
+                    else if (x == 1 && y == 0)
+                    {
+                        sourceColor = GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                        sourceColor.R |= 0 << 0;
+                        SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
                     }
                     else
                     {
-                        sourceColor = getPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
-                        sourceColor.B |= 1 << 0;
-                        setPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
+                        var embedColor = GetPixelBgra8(embedPixels, x, y, embedImageWidth, embedImageHeight);
+                        if (embedColor.Equals(Colors.Black))
+                        {
+                            sourceColor = GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                            sourceColor.B |= 0 << 0;
+                            SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
+                        }
+                        else
+                        {
+                            sourceColor = GetPixelBgra8(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                            sourceColor.B |= 1 << 0;
+                            SetPixelBgra8(sourcePixels, x, y, sourceColor, sourceImageWidth, sourceImageHeight);
+                        }
                     }
-                }
+            }
             return sourcePixels;
         }
 
-        private static Color getPixelBgra8(byte[] pixels, int x, int y, uint width, uint height)
+        private static Color GetPixelBgra8(byte[] pixels, int x, int y, uint width, uint height)
         {
-            var offset = (x * (int) width + y) * 4;
+            var offset = (x * (int)width + y) * 4;
             if (offset + 2 >= pixels.Length)
                 return Colors.Black;
             var r = pixels[offset + 2];
@@ -131,9 +167,9 @@ namespace ImageSandbox.Utilities.Embedder
             return Color.FromArgb(0, r, g, b);
         }
 
-        private static void setPixelBgra8(byte[] pixels, int x, int y, Color color, uint width, uint height)
+        private static void SetPixelBgra8(byte[] pixels, int x, int y, Color color, uint width, uint height)
         {
-            var offset = (x * (int) width + y) * 4;
+            var offset = (x * (int)width + y) * 4;
             if (offset + 2 >= pixels.Length)
                 return;
             pixels[offset + 2] = color.R;
@@ -144,45 +180,45 @@ namespace ImageSandbox.Utilities.Embedder
         /// <summary>
         ///     Extracts the image with image.
         /// </summary>
-        /// <param name="sourcePixels">The source pixels.</param>
-        /// <param name="sourceImageWidth">Width of the source image.</param>
-        /// <param name="sourceImageHeight">Height of the source image.</param>
+        /// <param name="sourcePixels">The sourceImage pixels.</param>
+        /// <param name="sourceImageWidth">Width of the sourceImage image.</param>
+        /// <param name="sourceImageHeight">Height of the sourceImage image.</param>
         /// <returns></returns>
-        public static byte[] ExtractImageWithImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
+        private static byte[] ExtractImageWithImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
         {
             var imageExtract = new byte[sourcePixels.Length];
 
 
             for (var i = 0; i < sourceImageHeight; i++)
-            for (var j = 0; j < sourceImageWidth; j++)
-            {
-                Color sourceColor;
-                switch (i)
+                for (var j = 0; j < sourceImageWidth; j++)
                 {
-                    case 0 when j == 0:
-                        sourceColor = getPixelBgra8(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
+                    Color sourceColor;
+                    switch (i)
+                    {
+                        case 0 when j == 0:
+                            sourceColor = GetPixelBgra8(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
 
-                        break;
-                    case 1 when j == 0:
-                        var bitVal0 = sourceColor.R & 1;
-                        if (bitVal0 == 1)
-                        {
-                            // throw new ArgumentException("This file should use text extraction");
-                            //TODO: Call text Extraction
-                        }
-                        break;
-                    default:
-                        sourceColor = getPixelBgra8(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
+                            break;
+                        case 1 when j == 0:
+                            var bitVal0 = sourceColor.R & 1;
+                            if (bitVal0 == 1)
+                            {
+                                // throw new ArgumentException("This file should use text extraction");
+                                //TODO: Call text Extraction
+                            }
+                            break;
+                        default:
+                            sourceColor = GetPixelBgra8(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
 
-                        var bitVal = sourceColor.B & 1;
-                        if (bitVal == 0)
-                            setPixelBgra8(imageExtract, i, j, Colors.Black, sourceImageWidth, sourceImageHeight);
-                        else
-                            setPixelBgra8(imageExtract, i, j, Colors.White, sourceImageWidth, sourceImageHeight);
+                            var bitVal = sourceColor.B & 1;
+                            if (bitVal == 0)
+                                SetPixelBgra8(imageExtract, i, j, Colors.Black, sourceImageWidth, sourceImageHeight);
+                            else
+                                SetPixelBgra8(imageExtract, i, j, Colors.White, sourceImageWidth, sourceImageHeight);
 
-                        break;
+                            break;
+                    }
                 }
-            }
 
             return imageExtract;
         }
