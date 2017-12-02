@@ -44,7 +44,7 @@ namespace ImageSandbox.Utilities.Embedder
 
                     WriteableBitmap bitmap = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
 
-                    sourcePixels = embedBytes(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth,
+                    sourcePixels = EmbedBytes(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth,
                         embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
 
                     if (sourcePixels == null) return bitmap;
@@ -72,19 +72,7 @@ namespace ImageSandbox.Utilities.Embedder
             using (var fileStream = await sourceFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var transform = new BitmapTransform
-                {
-                    ScaledWidth = Convert.ToUInt32(sourceImage.PixelWidth),
-                    ScaledHeight = Convert.ToUInt32(sourceImage.PixelHeight)
-                };
-
-                var pixelData = await decoder.GetPixelDataAsync(
-                    BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Straight,
-                    transform,
-                    ExifOrientationMode.IgnoreExifOrientation,
-                    ColorManagementMode.DoNotColorManage
-                );
+                var pixelData = await PixelDataProvider(sourceImage, decoder);
 
                 var sourcePixels = pixelData.DetachPixelData();
 
@@ -130,7 +118,7 @@ namespace ImageSandbox.Utilities.Embedder
         /// <param name="embedImageHeight">Height of the imageToEmbed image.</param>
         /// <param name="sourceImageWidth">Width of the sourceImage image.</param>
         /// <param name="sourceImageHeight">Height of the sourceImage image.</param>
-        private static byte[] embedBytes(byte[] sourcePixels, byte[] embedPixels, uint embedImageWidth,
+        private static byte[] EmbedBytes(byte[] sourcePixels, byte[] embedPixels, uint embedImageWidth,
             uint embedImageHeight, uint sourceImageWidth, uint sourceImageHeight)
         {
             var sourceColor = Color.FromArgb(119, 119, 119, 119);

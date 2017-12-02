@@ -153,6 +153,7 @@ namespace ImageSandbox.View
 
                 _imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(image);
                 EncryptedImage.Source = _imageResult;
+                await CustomDialog("Next, save the image to view the hidden message!");
             }
             catch (Exception)
             {
