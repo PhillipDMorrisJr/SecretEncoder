@@ -121,13 +121,31 @@ namespace ImageSandbox
 
         private async void extractImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-            EncryptedImage =
-                await ImageEmbedder.ExtractHiddenImage(WriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay),
+            try
+            {
+                EncryptedImage = await ImageEmbedder.ExtractHiddenImage(
+                    WriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay),
                     _sourceImageFile);
-            _imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(EncryptedImage);
+                _imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(EncryptedImage);
+            }
+            catch (Exception)
+            {
+                await CustomDialog("There are no secrets behind this image");
+            }
+
         }
 
-
+        private static async Task CustomDialog(String content)
+        {
+            ContentDialog notImageEncryptedDialog = new ContentDialog()
+            {
+                
+                Content = content,
+                IsPrimaryButtonEnabled = true,
+                PrimaryButtonText = "Okay"
+            };
+            await notImageEncryptedDialog.ShowAsync();
+        }
         //--------------------------------------------------------------------------------------------------------------//
         private void embedTextButton_OnClick(object sender, RoutedEventArgs e)
         {
@@ -142,9 +160,17 @@ namespace ImageSandbox
 
         private async void encryptImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-            var stuff = await ImageEncryption.EncryptAsync(ImageDisplay, _sourceImageFile);
+            try
+            {
+                var encryptedPixels = await ImageEncryption.EncryptAsync(ImageDisplay, _sourceImageFile);
 
-            ImageDisplay = await ToImageConverter.Convert(stuff, ImageDisplay, _sourceImage);
+                ImageDisplay = await ToImageConverter.Convert(encryptedPixels, ImageDisplay, _sourceImage);
+            }
+            catch (Exception)
+            {
+                await CustomDialog("Image cannot be encrypted");
+            }
+
         }
     }
 

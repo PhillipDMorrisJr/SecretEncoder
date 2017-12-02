@@ -42,9 +42,12 @@ namespace ImageSandbox.Utilities.Embedder
 
                     sourcePixels = EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth,
                         embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
-
-                    var image = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
-                    display = await ToImageConverter.Convert(sourcePixels, display, image);
+                    if (sourcePixels != null)
+                    {
+                        var image = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
+                        display = await ToImageConverter.Convert(sourcePixels, display, image);
+                       
+                    }
                     return display;
                 }
             }
@@ -78,7 +81,7 @@ namespace ImageSandbox.Utilities.Embedder
 
                 var sourcePixels = pixelData.DetachPixelData();
 
-                var extractedPixels = ExtractImageWithImage(sourcePixels, decoder.PixelWidth, decoder.PixelHeight);
+                var extractedPixels = await ExtractImageWithImage(sourcePixels, decoder.PixelWidth, decoder.PixelHeight);
 
                 var embeddedImageBitmap = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
 
@@ -169,7 +172,7 @@ namespace ImageSandbox.Utilities.Embedder
         /// <param name="sourceImageWidth">Width of the sourceImage image.</param>
         /// <param name="sourceImageHeight">Height of the sourceImage image.</param>
         /// <returns></returns>
-        private static byte[] ExtractImageWithImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
+        private static async Task<byte[]> ExtractImageWithImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
         {
             var imageExtract = new byte[sourcePixels.Length];
 
@@ -182,16 +185,20 @@ namespace ImageSandbox.Utilities.Embedder
                 switch (i)
                 {
                     case 0 when j == 0:
-                        sourceColor =
-                            PixelRetriever.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
-                        //TODO: Check if encrpyted post content dialog
+
+                        sourceColor = PixelRetriever.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
+                        if (sourceColor.Equals(Color.FromArgb(119, 119, 119, 119)))
+                        {
+                            
+                            return null;
+                        }
                         break;
                     case 1 when j == 0:
                         var bitVal0 = sourceColor.R & 1;
                         if (bitVal0 == 1)
                         {
-                            // throw new ArgumentException("This file should use text extraction");
-                            //TODO: Call text Extraction
+                            
+                            return null;
                         }
                         break;
                     default:
@@ -210,5 +217,7 @@ namespace ImageSandbox.Utilities.Embedder
 
             return imageExtract;
         }
+
+     
     }
 }
