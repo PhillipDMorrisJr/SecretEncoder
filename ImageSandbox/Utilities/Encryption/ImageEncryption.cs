@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
-using Windows.UI;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Media.Imaging;
 using ImageSandbox.Utilities.Converter;
+using ImageSandbox.Utilities.Retriever;
 
 namespace ImageSandbox.Utilities.Encryption
 {
@@ -15,6 +14,8 @@ namespace ImageSandbox.Utilities.Encryption
     /// </summary>
     public static class ImageEncryption
     {
+        #region Methods
+
         public static async Task<byte[]> EncryptAsync(Image image, StorageFile sourceImageFile)
         {
             var imageToEncrypt = WriteableBitmapConverter.ConvertToWriteableBitmap(image);
@@ -22,8 +23,7 @@ namespace ImageSandbox.Utilities.Encryption
             using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var transform = new BitmapTransform
-                {
+                var transform = new BitmapTransform {
                     ScaledWidth = Convert.ToUInt32(imageToEncrypt.PixelWidth),
                     ScaledHeight = Convert.ToUInt32(imageToEncrypt.PixelHeight)
                 };
@@ -36,15 +36,14 @@ namespace ImageSandbox.Utilities.Encryption
                     ColorManagementMode.DoNotColorManage
                 );
 
-
                 var sourcePixels = pixelData.DetachPixelData();
 
-                var encryptedImage = Encrypt(sourcePixels, decoder);
+                var encryptedImage = encrypt(sourcePixels, decoder);
                 return encryptedImage;
             }
         }
 
-        private static byte[] Encrypt(byte[] sourcePixels, BitmapDecoder decoder)
+        private static byte[] encrypt(byte[] sourcePixels, BitmapDecoder decoder)
         {
             var quadrantSize = sourcePixels.Length / 4;
             var quadrant1 = new byte[quadrantSize];
@@ -52,20 +51,21 @@ namespace ImageSandbox.Utilities.Encryption
             var quadrant3 = new byte[quadrantSize];
             var quadrant4 = new byte[quadrantSize];
 
-         
             var halfHeight = (int) decoder.PixelHeight / 2;
-            var halfWidth = (int)decoder.PixelWidth / 2;
-            var maxHeight = (int)decoder.PixelHeight;
-            var maxWidth = (int)decoder.PixelWidth;
+            var halfWidth = (int) decoder.PixelWidth / 2;
+            var maxHeight = (int) decoder.PixelHeight;
+            var maxWidth = (int) decoder.PixelWidth;
 
-           quadrant1 = GroupPixels(sourcePixels, quadrant1, 0, halfWidth, 0, halfHeight, decoder.PixelWidth, decoder.PixelHeight);
-           quadrant2 = GroupPixels(sourcePixels, quadrant2, halfWidth, maxWidth, 0, halfHeight, decoder.PixelWidth, decoder.PixelHeight);
-            quadrant3 = GroupPixels(sourcePixels, quadrant3, 0, halfWidth, halfHeight, maxHeight, decoder.PixelWidth, decoder.PixelHeight);
-            quadrant4 = GroupPixels(sourcePixels, quadrant4, halfWidth, maxWidth, halfHeight, maxHeight, decoder.PixelWidth, decoder.PixelHeight);
-            
+            quadrant1 = groupPixels(sourcePixels, quadrant1, 0, halfWidth, 0, halfHeight, decoder.PixelWidth,
+                decoder.PixelHeight);
+            quadrant2 = groupPixels(sourcePixels, quadrant2, halfWidth, maxWidth, 0, halfHeight, decoder.PixelWidth,
+                decoder.PixelHeight);
+            quadrant3 = groupPixels(sourcePixels, quadrant3, 0, halfWidth, halfHeight, maxHeight, decoder.PixelWidth,
+                decoder.PixelHeight);
+            quadrant4 = groupPixels(sourcePixels, quadrant4, halfWidth, maxWidth, halfHeight, maxHeight,
+                decoder.PixelWidth, decoder.PixelHeight);
 
-            var quadrants = new List<byte[]>
-            {
+            var quadrants = new List<byte[]> {
                 quadrant1,
                 quadrant2,
                 quadrant3,
@@ -83,9 +83,8 @@ namespace ImageSandbox.Utilities.Encryption
             return encryptedImage;
         }
 
-
-
-        private static byte[] GroupPixels(byte[] sourcePixels, byte[] quadrantPixels, int startX, int endX, int startY, int endY, uint width, uint height)
+        private static byte[] groupPixels(byte[] sourcePixels, byte[] quadrantPixels, int startX, int endX, int startY,
+            int endY, uint width, uint height)
         {
             for (var y = startY; y < endY; y++)
             for (var x = startX; x < endX; x++)
@@ -96,5 +95,6 @@ namespace ImageSandbox.Utilities.Encryption
             return sourcePixels;
         }
 
+        #endregion
     }
 }

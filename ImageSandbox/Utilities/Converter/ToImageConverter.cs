@@ -7,14 +7,13 @@ using Windows.Storage.Streams;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
 
-namespace ImageSandbox.Utilities
+namespace ImageSandbox.Utilities.Converter
 {
     public static class ToImageConverter
     {
         public static async Task<Image> Convert(StorageFile imageFile, Image originalImage)
         {
-            WriteableBitmap bitmap;
-            var copyBitmapImage = await MakeACopyOfTheFileToWorkOn(imageFile);
+            var copyBitmapImage = await makeACopyOfTheFileToWorkOn(imageFile);
             using (var fileStream = await imageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
@@ -34,7 +33,7 @@ namespace ImageSandbox.Utilities
 
                 var sourcePixels = pixelData.DetachPixelData();
 
-                bitmap = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
+                var bitmap = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
                 var convertedImage = await Convert(sourcePixels, originalImage, bitmap);
                 return convertedImage;
             }
@@ -50,7 +49,7 @@ namespace ImageSandbox.Utilities
             }
         }
 
-        private static async Task<BitmapImage> MakeACopyOfTheFileToWorkOn(StorageFile imageFile)
+        private static async Task<BitmapImage> makeACopyOfTheFileToWorkOn(StorageFile imageFile)
         {
             IRandomAccessStream inputstream = await imageFile.OpenReadAsync();
             var newImage = new BitmapImage();

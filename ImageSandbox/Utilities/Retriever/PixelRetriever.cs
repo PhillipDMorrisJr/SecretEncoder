@@ -1,6 +1,6 @@
 ﻿using Windows.UI;
 
-namespace ImageSandbox.Utilities
+namespace ImageSandbox.Utilities.Retriever
 {
     public static class PixelRetriever
     {
