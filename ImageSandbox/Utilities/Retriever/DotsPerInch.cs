@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
-using Windows.UI.Xaml.Media.Imaging;
 
 namespace ImageSandbox.Utilities.Retriever
 {
@@ -20,6 +16,7 @@ namespace ImageSandbox.Utilities.Retriever
                 return x;
             }
         }
+
         public static async Task<double> RetrieveY(StorageFile imageFile)
         {
             using (var embedfileStream = await imageFile.OpenAsync(FileAccessMode.Read))
@@ -28,7 +25,6 @@ namespace ImageSandbox.Utilities.Retriever
                 var y = decoder.DpiY;
                 return y;
             }
-            
         }
     }
 }

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
@@ -14,7 +11,6 @@ namespace ImageSandbox.Utilities
 {
     public static class ToImageConverter
     {
-
         public static async Task<Image> Convert(StorageFile imageFile, Image originalImage)
         {
             WriteableBitmap bitmap;
@@ -38,8 +34,8 @@ namespace ImageSandbox.Utilities
 
                 var sourcePixels = pixelData.DetachPixelData();
 
-                bitmap = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
-                Image convertedImage = await Convert(sourcePixels, originalImage, bitmap);
+                bitmap = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
+                var convertedImage = await Convert(sourcePixels, originalImage, bitmap);
                 return convertedImage;
             }
         }
@@ -52,9 +48,8 @@ namespace ImageSandbox.Utilities
                 originalImage.Source = bitmap;
                 return originalImage;
             }
-            
-
         }
+
         private static async Task<BitmapImage> MakeACopyOfTheFileToWorkOn(StorageFile imageFile)
         {
             IRandomAccessStream inputstream = await imageFile.OpenReadAsync();

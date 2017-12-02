@@ -3,7 +3,6 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
-using Windows.Storage.Streams;
 using Windows.UI;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
@@ -47,7 +46,6 @@ namespace ImageSandbox.Utilities.Embedder
                     var image = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
                     display = await ToImageConverter.Convert(sourcePixels, display, image);
                     return display;
-                    
                 }
             }
         }
@@ -131,35 +129,35 @@ namespace ImageSandbox.Utilities.Embedder
             }
 
             for (var y = 0; y < embedImageHeight; y++)
-            {
-                for (var x = 0; x < embedImageWidth; x++)
-                    if (x == 0 && y == 0)
+            for (var x = 0; x < embedImageWidth; x++)
+                if (x == 0 && y == 0)
+                {
+                    PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
+                }
+                else if (x == 1 && y == 0)
+                {
+                    sourceColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                    sourceColor.R |= 0 << 0;
+                    PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
+                }
+                else
+                {
+                    var embedColor = PixelRetriever.RetrieveColor(embedPixels, x, y, embedImageWidth, embedImageHeight);
+                    if (embedColor.Equals(Colors.Black))
                     {
-                        PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
-                    }
-                    else if (x == 1 && y == 0)
-                    {
-                        sourceColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
-                        sourceColor.R |= 0 << 0;
+                        sourceColor =
+                            PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                        sourceColor.B |= 0 << 0;
                         PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
                     }
                     else
                     {
-                        var embedColor = PixelRetriever.RetrieveColor(embedPixels, x, y, embedImageWidth, embedImageHeight);
-                        if (embedColor.Equals(Colors.Black))
-                        {
-                            sourceColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
-                            sourceColor.B |= 0 << 0;
-                            PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
-                        }
-                        else
-                        {
-                            sourceColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
-                            sourceColor.B |= 1 << 0;
-                            PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
-                        }
+                        sourceColor =
+                            PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                        sourceColor.B |= 1 << 0;
+                        PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
                     }
-            }
+                }
             return sourcePixels;
         }
 
@@ -184,7 +182,8 @@ namespace ImageSandbox.Utilities.Embedder
                 switch (i)
                 {
                     case 0 when j == 0:
-                        sourceColor = PixelRetriever.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
+                        sourceColor =
+                            PixelRetriever.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
                         //TODO: Check if encrpyted post content dialog
                         break;
                     case 1 when j == 0:
@@ -196,7 +195,8 @@ namespace ImageSandbox.Utilities.Embedder
                         }
                         break;
                     default:
-                        sourceColor = PixelRetriever.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
+                        sourceColor =
+                            PixelRetriever.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
 
                         var bitVal = sourceColor.B & 1;
                         if (bitVal == 0)
