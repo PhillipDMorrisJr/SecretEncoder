@@ -7,12 +7,14 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using Windows.UI;
+using Windows.UI.Notifications;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
 using ImageSandbox.Utilities;
 using ImageSandbox.Utilities.Converter;
 using ImageSandbox.Utilities.Embedder;
+using ImageSandbox.Utilities.Retriever;
 
 
 namespace ImageSandbox
@@ -24,11 +26,9 @@ namespace ImageSandbox
     {
         #region Data members
 
-        private double dpiX;
-        private double dpiY;
         private WriteableBitmap modifiedImage;
         private WriteableBitmap embedImage;
-        private WriteableBitmap ImageResult;
+        private WriteableBitmap imageResult;
         private WriteableBitmap sourceImage;
         private StorageFile sourceImageFile;
         private StorageFile embedImageFile;
@@ -45,8 +45,6 @@ namespace ImageSandbox
             this.InitializeComponent();
 
             this.modifiedImage = null;
-            this.dpiX = 0;
-            this.dpiY = 0;
         }
 
         #endregion
@@ -88,45 +86,56 @@ namespace ImageSandbox
                 var stream = await savefile.OpenAsync(FileAccessMode.ReadWrite);
                 var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
 
-                var pixelStream = this.ImageResult.PixelBuffer.AsStream();
+                var pixelStream = this.imageResult.PixelBuffer.AsStream();
                 var pixels = new byte[pixelStream.Length];
                 await pixelStream.ReadAsync(pixels, 0, pixels.Length);
 
+                double x = await DotsPerInch.RetrieveX(this.sourceImageFile);
+                double y = await DotsPerInch.RetrieveY(this.sourceImageFile);
+
                 encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore,
-                    (uint) this.ImageResult.PixelWidth,
-                    (uint) this.ImageResult.PixelHeight, this.dpiX, this.dpiY, pixels);
+                    (uint) this.imageResult.PixelWidth,
+                    (uint) this.imageResult.PixelHeight, x, y, pixels);
                 await encoder.FlushAsync();
 
                 stream.Dispose();
             }
         }
-        
+
+        //--------------------------------------------------------------//
 
         private async void selectSourceImage_OnClick(object sender, RoutedEventArgs e)
         {
             this.sourceImageFile = await this.selectSourceImageFile();
-            this.imageDisplay = await ImageConverter.ConvertToImage(this.sourceImageFile);
-             
+            this.imageDisplay = await ToImageConverter.Convert(this.sourceImageFile, this.imageDisplay);
+            this.sourceImage = WriteableBitmapConverter.ConvertToWriteableBitmap(this.imageDisplay);
+
         }
 
+        //---------------------------------------
         private async void selectImageToEmbedWith_OnClick(object sender, RoutedEventArgs e)
         {
            this.embedImageFile = await this.selectSourceImageFile();
-           this.embedDisplay = await ImageConverter.ConvertToImage(this.embedImageFile);
+           this.embedDisplay = await ToImageConverter.Convert(this.embedImageFile, this.embedDisplay);
+           this.embedImage = WriteableBitmapConverter.ConvertToWriteableBitmap(this.embedDisplay);
         }
-
+        //----------------------------------------------------------
+    
         private async void embedImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-           this.encryptedImage = await ImageEmbedder.EmbedImage(this.sourceImage, this.embedImage);
+           this.encryptedImage = await ImageEmbedder.EmbedImage(this.sourceImage, this.embedImage, sourceImageFile, embedImageFile);
+           this.imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(this.encryptedImage);
         }
 
         private async void extractImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-            await ImageEmbedder.ExtractHiddenImage(WriteableBitmapConverter.ConvertToWriteableBitmap(this.encryptedImage));
-        }
-        
+            this.encryptedImage = await ImageEmbedder.ExtractHiddenImage(WriteableBitmapConverter.ConvertToWriteableBitmap(this.imageDisplay), this.sourceImageFile);
+            this.imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(this.encryptedImage);
 
-           
+        }
+
+
+
 
         //--------------------------------------------------------------------------------------------------------------//
         private void embedTextButton_OnClick(object sender, RoutedEventArgs e)
