@@ -102,8 +102,8 @@ namespace ImageSandbox.Utilities.Encryption
             for (var y = startY; y < endY; y++)
             for (var x = startX; x < endX; x++)
             {
-                var currentColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, width, height);
-                PixelRetriever.ModifyPixel(quadrantPixels, x, y, currentColor, width);
+                var currentColor = PixelMap.RetrieveColor(sourcePixels, x, y, width, height);
+                PixelMap.ModifyPixel(quadrantPixels, x, y, currentColor, width);
             }
             return sourcePixels;
         }

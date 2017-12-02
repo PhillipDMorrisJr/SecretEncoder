@@ -132,30 +132,30 @@ namespace ImageSandbox.Utilities.Embedder
             for (var x = 0; x < embedImageWidth; x++) { 
                 if (x == 0 && y == 0)
                 {
-                    PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
+                    PixelMap.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
                 }
                 else if (x == 1 && y == 0)
                 {
-                    sourceColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                    sourceColor = PixelMap.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                     sourceColor.R |= 0 << 0;
-                    PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
+                    PixelMap.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
                 }
                 else
                 {
-                    var embedColor = PixelRetriever.RetrieveColor(embedPixels, x, y, embedImageWidth, embedImageHeight);
+                    var embedColor = PixelMap.RetrieveColor(embedPixels, x, y, embedImageWidth, embedImageHeight);
                     if (embedColor.Equals(Colors.Black))
                     {
                         sourceColor =
-                            PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                            PixelMap.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                         sourceColor.B |= 0 << 0;
-                        PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
+                        PixelMap.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
                     }
                     else
                     {
                         sourceColor =
-                            PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
+                            PixelMap.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                         sourceColor.B |= 1 << 0;
-                        PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
+                        PixelMap.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
                     }
                 }
         }
@@ -185,7 +185,7 @@ namespace ImageSandbox.Utilities.Embedder
                 {
                     case 0 when j == 0:
 
-                        sourceColor = PixelRetriever.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
+                        sourceColor = PixelMap.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
                         if (sourceColor.Equals(Color.FromArgb(119, 119, 119, 119)))
                         {
                             
@@ -202,13 +202,13 @@ namespace ImageSandbox.Utilities.Embedder
                         break;
                     default:
                         sourceColor =
-                            PixelRetriever.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
+                            PixelMap.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
 
                         var bitVal = sourceColor.B & 1;
                         if (bitVal == 0)
-                            PixelRetriever.ModifyPixel(imageExtract, i, j, Colors.Black, sourceImageWidth);
+                            PixelMap.ModifyPixel(imageExtract, i, j, Colors.Black, sourceImageWidth);
                         else
-                            PixelRetriever.ModifyPixel(imageExtract, i, j, Colors.White, sourceImageWidth);
+                            PixelMap.ModifyPixel(imageExtract, i, j, Colors.White, sourceImageWidth);
 
                         break;
                 }

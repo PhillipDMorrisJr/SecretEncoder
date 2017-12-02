@@ -2,8 +2,17 @@
 
 namespace ImageSandbox.Utilities.Retriever
 {
-    public static class PixelRetriever
+    public static class PixelMap
     {
+        /// <summary>
+        /// Retrieves the color.
+        /// </summary>
+        /// <param name="pixels">The pixels.</param>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="width">The width.</param>
+        /// <param name="height">The height.</param>
+        /// <returns></returns>
         public static Color RetrieveColor(byte[] pixels, int x, int y, uint width, uint height)
         {
             var offset = (x * (int) width + y) * 4;
@@ -15,6 +24,14 @@ namespace ImageSandbox.Utilities.Retriever
             return Color.FromArgb(0, r, g, b);
         }
 
+        /// <summary>
+        /// Modifies the pixel.
+        /// </summary>
+        /// <param name="pixels">The pixels.</param>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="color">The color.</param>
+        /// <param name="width">The width.</param>
         public static void ModifyPixel(byte[] pixels, int x, int y, Color color, uint width)
         {
             var offset = (x * (int) width + y) * 4;
