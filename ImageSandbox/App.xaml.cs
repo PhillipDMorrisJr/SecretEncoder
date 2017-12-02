@@ -57,7 +57,7 @@ namespace ImageSandbox
             if (e.PrelaunchActivated == false)
             {
                 if (rootFrame.Content == null)
-                    rootFrame.Navigate(typeof(MainPage), e.Arguments);
+                    rootFrame.Navigate(typeof(View.MainPage), e.Arguments);
                 // Ensure the current window is active
                 Window.Current.Activate();
             }

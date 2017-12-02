@@ -13,7 +13,7 @@ using ImageSandbox.Utilities.Embedder;
 using ImageSandbox.Utilities.Encryption;
 using ImageSandbox.Utilities.Retriever;
 
-namespace ImageSandbox
+namespace ImageSandbox.View
 {
     /// <summary>
     ///     Application main page.
