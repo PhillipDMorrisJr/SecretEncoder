@@ -7,6 +7,7 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using ImageSandbox.Utilities;
 using ImageSandbox.Utilities.Converter;
@@ -114,9 +115,9 @@ namespace ImageSandbox
 
         private async void embedImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-            EncryptedImage =
-                await ImageEmbedder.EmbedImage(_sourceImage, _embedImage, _sourceImageFile, _embedImageFile, new Image());
-            _imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(EncryptedImage);
+            _imageResult =
+                await ImageEmbedder.EmbedImage(_sourceImage, _embedImage, _sourceImageFile, _embedImageFile);
+            this.EncryptedImage.Source = _imageResult;
         }
 
         private async void extractImageButton_OnClick(object sender, RoutedEventArgs e)

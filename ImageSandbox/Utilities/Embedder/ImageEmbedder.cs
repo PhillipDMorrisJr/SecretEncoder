@@ -6,6 +6,8 @@ using Windows.Storage;
 using Windows.UI;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
+using ImageSandbox.Utilities.Converter;
+using ImageSandbox.Utilities.Retriever;
 
 namespace ImageSandbox.Utilities.Embedder
 {
@@ -23,13 +25,13 @@ namespace ImageSandbox.Utilities.Embedder
         /// <param name="embedImageFile">The embed image file.</param>
         /// <param name="display">The display.</param>
         /// <returns></returns>
-        public static async Task<Image> EmbedImage(WriteableBitmap sourceImage, WriteableBitmap imageToEmbed,
-            StorageFile sourceImageFile, StorageFile embedImageFile, Image display)
+        public static async Task<WriteableBitmap> EmbedImage(WriteableBitmap sourceImage, WriteableBitmap imageToEmbed,
+            StorageFile sourceImageFile, StorageFile embedImageFile)
         {
             using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var sourcePixelData = await PixelDataProvider(imageToEmbed, decoder);
+                var sourcePixelData = await PixelDataProvider(sourceImage, decoder);
 
                 var sourcePixels = sourcePixelData.DetachPixelData();
 
@@ -40,24 +42,29 @@ namespace ImageSandbox.Utilities.Embedder
 
                     var embedSourcePixels = embedPixelData.DetachPixelData();
 
+                    WriteableBitmap bitmap = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight); 
+
                     sourcePixels = EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth,
                         embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
-                    if (sourcePixels != null)
+
+                    if (sourcePixels == null) return bitmap;
+
+                    using (var writeStream = bitmap.PixelBuffer.AsStream())
                     {
-                        var image = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
-                        display = await ToImageConverter.Convert(sourcePixels, display, image);
-                       
+                        await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
                     }
-                    return display;
+                    
+                    return bitmap;
                 }
             }
         }
 
 
         /// <summary>
-        ///     Extracts the hidden image.
+        /// Extracts the hidden image.
         /// </summary>
         /// <param name="sourceImage">The source image.</param>
+        /// <param name="sourceFile">The source file.</param>
         /// <returns></returns>
         public static async Task<Image> ExtractHiddenImage(WriteableBitmap sourceImage, StorageFile sourceFile)
         {
