@@ -45,6 +45,7 @@ namespace ImageSandbox
 
         private async Task<StorageFile> SelectSourceImageFile()
         {
+
             var openPicker = new FileOpenPicker
             {
                 ViewMode = PickerViewMode.Thumbnail,
@@ -99,25 +100,54 @@ namespace ImageSandbox
 
         private async void selectSourceImage_OnClick(object sender, RoutedEventArgs e)
         {
-            _sourceImageFile = await SelectSourceImageFile();
-            ImageDisplay = await ToImageConverter.Convert(_sourceImageFile, ImageDisplay);
-            _sourceImage = WriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay);
+            try
+            {
+                _sourceImageFile = await SelectSourceImageFile();
+                ImageDisplay = await ToImageConverter.Convert(_sourceImageFile, ImageDisplay);
+                _sourceImage = WriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay);
+            }
+            catch (Exception)
+            {
+                await FailedSelectionDialog();
+            }
+
         }
 
-        
+        private static async Task FailedSelectionDialog()
+        {
+            await CustomDialog("File selection failed. Try again.");
+        }
+
+
         private async void selectImageToEmbedWith_OnClick(object sender, RoutedEventArgs e)
         {
+            try
+            {
             _embedImageFile = await SelectSourceImageFile();
             EmbedDisplay = await ToImageConverter.Convert(_embedImageFile, EmbedDisplay);
             _embedImage = WriteableBitmapConverter.ConvertToWriteableBitmap(EmbedDisplay);
+            }
+            catch (Exception)
+            {
+                await FailedSelectionDialog();
+            }
+
         }
         
 
         private async void embedImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-            _imageResult =
-                await ImageEmbedder.EmbedImage(_sourceImage, _embedImage, _sourceImageFile, _embedImageFile);
-            this.EncryptedImage.Source = _imageResult;
+            try
+            {
+                _imageResult =
+                    await ImageEmbedder.EmbedImage(_sourceImage, _embedImage, _sourceImageFile, _embedImageFile);
+                this.EncryptedImage.Source = _imageResult;
+            }
+            catch (Exception)
+            {
+                await CustomDialog("Embedding failed try selecting new files or restarting the program.");
+            }
+  
         }
 
         private async void extractImageButton_OnClick(object sender, RoutedEventArgs e)
@@ -150,12 +180,17 @@ namespace ImageSandbox
 
         private async void embedTextButton_OnClick(object sender, RoutedEventArgs e)
         {
-            await CustomDialog("Functionality not implemeted");
+            await NotImpelmplementedDialog();
         }
 
         private async void extractTextButton_OnClick(object sender, RoutedEventArgs e)
         {
-            await CustomDialog("Functionality not implemeted");
+            await NotImpelmplementedDialog();
+        }
+
+        private static async Task NotImpelmplementedDialog()
+        {
+            await NotImpelmplementedDialog();
         }
 
 
