@@ -11,6 +11,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
 using ImageSandbox.Utilities;
+using ImageSandbox.Utilities.Converter;
 using ImageSandbox.Utilities.Embedder;
 
 
@@ -66,13 +67,7 @@ namespace ImageSandbox
             return file;
         }
 
-        private async Task<BitmapImage> MakeACopyOfTheFileToWorkOn(StorageFile imageFile)
-        {
-            IRandomAccessStream inputstream = await imageFile.OpenReadAsync();
-            var newImage = new BitmapImage();
-            newImage.SetSource(inputstream);
-            return newImage;
-        }
+       
 
         private void saveButton_OnClick(object sender, RoutedEventArgs e)
         {
@@ -110,140 +105,28 @@ namespace ImageSandbox
         private async void selectSourceImage_OnClick(object sender, RoutedEventArgs e)
         {
             this.sourceImageFile = await this.selectSourceImageFile();
-            await this.UpdateImage(this.imageDisplay, this.sourceImageFile);
-            this.sourceImage = this.modifiedImage;
+            this.imageDisplay = await ImageConverter.ConvertToImage(this.sourceImageFile);
+             
         }
 
         private async void selectImageToEmbedWith_OnClick(object sender, RoutedEventArgs e)
         {
-            this.embedImageFile = await this.selectSourceImageFile();
-
-            await this.UpdateImage(this.embedDisplay, this.embedImageFile);
-            this.embedImage = this.modifiedImage;
+           this.embedImageFile = await this.selectSourceImageFile();
+           this.embedDisplay = await ImageConverter.ConvertToImage(this.embedImageFile);
         }
 
         private async void embedImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-            
-            var copyBitmapImage = this.sourceImage;
-            var embedcopyBitmapImage = this.embedImage;
-            using (var fileStream = await this.sourceImageFile.OpenAsync(FileAccessMode.Read))
-            {
-                var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var pixelData = await PixelDataProvider(copyBitmapImage, decoder);
-
-                var sourcePixels = pixelData.DetachPixelData();
-
-                using (var embedfileStream = await embedImageFile.OpenAsync(FileAccessMode.Read))
-                {
-                    var embeddecoder = await BitmapDecoder.CreateAsync(embedfileStream);
-                    var pixelData2 = await PixelDataProvider(embedcopyBitmapImage, decoder);
-
-                    var embedSourcePixels = pixelData2.DetachPixelData();
-
-                    byte[] sourceCopy = ImageEmbedder.EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth, embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
-
-                    this.modifiedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
-                    await UpdateImageSource(sourceCopy, this.encryptedImage);
-                }
-
-            }
-        }
-
-        private static async Task<PixelDataProvider> PixelDataProvider(WriteableBitmap copyBitmapImage, BitmapDecoder decoder)
-        {
-            var transform = new BitmapTransform
-            {
-                ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
-                ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
-            };
-
-            var pixelData = await decoder.GetPixelDataAsync(
-                BitmapPixelFormat.Bgra8,
-                BitmapAlphaMode.Straight,
-                transform,
-                ExifOrientationMode.IgnoreExifOrientation,
-                ColorManagementMode.DoNotColorManage
-            );
-            return pixelData;
+           this.encryptedImage = await ImageEmbedder.EmbedImage(this.sourceImage, this.embedImage);
         }
 
         private async void extractImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-            var copyBitmapImage = this.sourceImage;
-
-            using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
-            {
-                var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var transform = new BitmapTransform
-                {
-                    ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
-                    ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
-                };
-
-                var pixelData = await decoder.GetPixelDataAsync(
-                    BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Straight,
-                    transform,
-                    ExifOrientationMode.IgnoreExifOrientation,
-                    ColorManagementMode.DoNotColorManage
-                );
-
-                var sourcePixels = pixelData.DetachPixelData();
-
-                byte[] extractedPixels = ImageEmbedder.ExtractImageWithImage(sourcePixels, decoder.PixelWidth, decoder.PixelHeight);
-
-                    this.modifiedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
-                    using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
-                    {
-                        await writeStream.WriteAsync(extractedPixels, 0, extractedPixels.Length);
-                        this.encryptedImage.Source = this.modifiedImage;
-                        this.ImageResult = this.modifiedImage;
-                    }
-                }
-            }
-
-
-        private async Task UpdateImage(Image imageToUpdate, StorageFile imageFile)
-        {
-            var copyBitmapImage = await this.MakeACopyOfTheFileToWorkOn(imageFile);
-            using (var fileStream = await imageFile.OpenAsync(FileAccessMode.Read))
-            {
-                var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var transform = new BitmapTransform
-                {
-                    ScaledWidth = Convert.ToUInt32(copyBitmapImage.PixelWidth),
-                    ScaledHeight = Convert.ToUInt32(copyBitmapImage.PixelHeight)
-                };
-
-                this.dpiX = decoder.DpiX;
-                this.dpiY = decoder.DpiY;
-
-                var pixelData = await decoder.GetPixelDataAsync(
-                    BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Straight,
-                    transform,
-                    ExifOrientationMode.IgnoreExifOrientation,
-                    ColorManagementMode.DoNotColorManage
-                );
-                
-                var sourcePixels = pixelData.DetachPixelData();
-
-                this.modifiedImage = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight);
-                await UpdateImageSource(sourcePixels, imageToUpdate);
-            }
+            await ImageEmbedder.ExtractHiddenImage(WriteableBitmapConverter.ConvertToWriteableBitmap(this.encryptedImage));
         }
+        
 
-        private async Task UpdateImageSource(byte[] sourcePixels, Image originalImage)
-        {
-            using (var writeStream = this.modifiedImage.PixelBuffer.AsStream())
-            {
-                await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
-                originalImage.Source = this.modifiedImage;
-            }
-        }
-
-
+           
 
         //--------------------------------------------------------------------------------------------------------------//
         private void embedTextButton_OnClick(object sender, RoutedEventArgs e)
