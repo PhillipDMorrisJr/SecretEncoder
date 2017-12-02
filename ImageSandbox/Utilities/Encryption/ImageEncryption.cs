@@ -52,7 +52,7 @@ namespace ImageSandbox.Utilities.Encryption
                     for (int x = 0; x < ((int)decoder.PixelWidth / 2); x++)
                     {
                         currentColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, decoder.PixelWidth, decoder.PixelHeight);
-                        PixelRetriever.PixelModifier(quadrant1, x, y, currentColor, decoder.PixelWidth);
+                        PixelRetriever.ModifyPixel(quadrant1, x, y, currentColor, decoder.PixelWidth);
 
                     }
                 }
@@ -61,7 +61,7 @@ namespace ImageSandbox.Utilities.Encryption
                     for (int x = ((int)decoder.PixelWidth / 2); x < (int)decoder.PixelHeight; x++)
                     {
                         currentColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, decoder.PixelWidth, decoder.PixelHeight);
-                        PixelRetriever.PixelModifier(quadrant2, x, y, currentColor, decoder.PixelWidth);
+                        PixelRetriever.ModifyPixel(quadrant2, x, y, currentColor, decoder.PixelWidth);
                     }
                 }
 
@@ -70,7 +70,7 @@ namespace ImageSandbox.Utilities.Encryption
                     for (int x = ((int)decoder.PixelWidth / 2); x < (int)decoder.PixelHeight; x++)
                     {
                         currentColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, decoder.PixelWidth, decoder.PixelHeight);
-                        PixelRetriever.PixelModifier(quadrant3, x, y, currentColor, decoder.PixelWidth);
+                        PixelRetriever.ModifyPixel(quadrant3, x, y, currentColor, decoder.PixelWidth);
                     }
                 }
 
@@ -80,7 +80,7 @@ namespace ImageSandbox.Utilities.Encryption
                     for (int x = 0; x < ((int)decoder.PixelWidth / 2); x++)
                     {
                         currentColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, decoder.PixelWidth, decoder.PixelHeight);
-                        PixelRetriever.PixelModifier(quadrant4, x, y, currentColor, decoder.PixelWidth);
+                        PixelRetriever.ModifyPixel(quadrant4, x, y, currentColor, decoder.PixelWidth);
                     }
                 }
 

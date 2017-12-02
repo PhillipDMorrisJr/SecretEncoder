@@ -50,8 +50,9 @@ namespace ImageSandbox.Utilities
             {
                 await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
                 originalImage.Source = bitmap;
+                return originalImage;
             }
-            return originalImage;
+            
 
         }
         private static async Task<BitmapImage> MakeACopyOfTheFileToWorkOn(StorageFile imageFile)

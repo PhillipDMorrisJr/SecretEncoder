@@ -30,40 +30,16 @@ namespace ImageSandbox.Utilities.Embedder
             using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var transform = new BitmapTransform
-                {
-                    ScaledWidth = Convert.ToUInt32(sourceImage.PixelWidth),
-                    ScaledHeight = Convert.ToUInt32(sourceImage.PixelHeight)
-                };
+                var sourcePixelData = await PixelDataProvider(imageToEmbed, decoder);
 
-                var pixelData = await decoder.GetPixelDataAsync(
-                    BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Straight,
-                    transform,
-                    ExifOrientationMode.IgnoreExifOrientation,
-                    ColorManagementMode.DoNotColorManage
-                );
-
-                var sourcePixels = pixelData.DetachPixelData();
+                var sourcePixels = sourcePixelData.DetachPixelData();
 
                 using (var embedfileStream = await embedImageFile.OpenAsync(FileAccessMode.Read))
                 {
                     var embeddecoder = await BitmapDecoder.CreateAsync(embedfileStream);
-                    var embedtransform = new BitmapTransform
-                    {
-                        ScaledWidth = Convert.ToUInt32(imageToEmbed.PixelWidth),
-                        ScaledHeight = Convert.ToUInt32(imageToEmbed.PixelHeight)
-                    };
+                    var embedPixelData = await PixelDataProvider(imageToEmbed, embeddecoder);
 
-                    var pixelData2 = await embeddecoder.GetPixelDataAsync(
-                        BitmapPixelFormat.Bgra8,
-                        BitmapAlphaMode.Straight,
-                        embedtransform,
-                        ExifOrientationMode.IgnoreExifOrientation,
-                        ColorManagementMode.DoNotColorManage
-                    );
-
-                    var embedSourcePixels = pixelData2.DetachPixelData();
+                    var embedSourcePixels = embedPixelData.DetachPixelData();
 
                     sourcePixels = EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth,
                         embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
@@ -159,13 +135,13 @@ namespace ImageSandbox.Utilities.Embedder
                 for (var x = 0; x < embedImageWidth; x++)
                     if (x == 0 && y == 0)
                     {
-                        PixelRetriever.PixelModifier(sourcePixels, x, y, sourceColor, sourceImageWidth);
+                        PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
                     }
                     else if (x == 1 && y == 0)
                     {
                         sourceColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                         sourceColor.R |= 0 << 0;
-                        PixelRetriever.PixelModifier(sourcePixels, x, y, sourceColor, sourceImageWidth);
+                        PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
                     }
                     else
                     {
@@ -174,13 +150,13 @@ namespace ImageSandbox.Utilities.Embedder
                         {
                             sourceColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                             sourceColor.B |= 0 << 0;
-                            PixelRetriever.PixelModifier(sourcePixels, x, y, sourceColor, sourceImageWidth);
+                            PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
                         }
                         else
                         {
                             sourceColor = PixelRetriever.RetrieveColor(sourcePixels, x, y, sourceImageWidth, sourceImageHeight);
                             sourceColor.B |= 1 << 0;
-                            PixelRetriever.PixelModifier(sourcePixels, x, y, sourceColor, sourceImageWidth);
+                            PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
                         }
                     }
             }
@@ -224,9 +200,9 @@ namespace ImageSandbox.Utilities.Embedder
 
                         var bitVal = sourceColor.B & 1;
                         if (bitVal == 0)
-                            PixelRetriever.PixelModifier(imageExtract, i, j, Colors.Black, sourceImageWidth);
+                            PixelRetriever.ModifyPixel(imageExtract, i, j, Colors.Black, sourceImageWidth);
                         else
-                            PixelRetriever.PixelModifier(imageExtract, i, j, Colors.White, sourceImageWidth);
+                            PixelRetriever.ModifyPixel(imageExtract, i, j, Colors.White, sourceImageWidth);
 
                         break;
                 }

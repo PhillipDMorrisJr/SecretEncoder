@@ -20,7 +20,7 @@ namespace ImageSandbox.Utilities
             return Color.FromArgb(0, r, g, b);
         }
 
-        public static void PixelModifier(byte[] pixels, int x, int y, Color color, uint width)
+        public static void ModifyPixel(byte[] pixels, int x, int y, Color color, uint width)
         {
             var offset = (x * (int)width + y) * 4;
             if (offset + 2 >= pixels.Length)
