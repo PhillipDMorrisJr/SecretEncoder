@@ -3,7 +3,7 @@ using Windows.UI.Xaml.Media.Imaging;
 
 namespace ImageSandbox.Utilities.Converter
 {
-    public static class WriteableBitmapConverter
+    public static class ToWriteableBitmapConverter
     {
         /// <summary>
         ///     Converts to writeable bitmap.

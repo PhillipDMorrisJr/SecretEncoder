@@ -13,7 +13,7 @@ namespace ImageSandbox.Utilities.Converter
     {
         public static async Task<Image> Convert(StorageFile imageFile, Image originalImage)
         {
-            var copyBitmapImage = await makeACopyOfTheFileToWorkOn(imageFile);
+            var copyBitmapImage = await MakeACopyOfTheFileToWorkOn(imageFile);
             using (var fileStream = await imageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
@@ -49,7 +49,7 @@ namespace ImageSandbox.Utilities.Converter
             }
         }
 
-        private static async Task<BitmapImage> makeACopyOfTheFileToWorkOn(StorageFile imageFile)
+        private static async Task<BitmapImage> MakeACopyOfTheFileToWorkOn(StorageFile imageFile)
         {
             IRandomAccessStream inputstream = await imageFile.OpenReadAsync();
             var newImage = new BitmapImage();

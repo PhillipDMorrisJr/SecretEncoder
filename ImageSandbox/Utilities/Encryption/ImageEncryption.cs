@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
@@ -14,9 +15,9 @@ namespace ImageSandbox.Utilities.Encryption
     /// </summary>
     public static class ImageEncryption
     {
-        public static async Task<byte[]> EncryptAsync(Image image, StorageFile sourceImageFile)
+        public static async Task<Image> EncryptAsync(Image image, StorageFile sourceImageFile)
         {
-            var imageToEncrypt = WriteableBitmapConverter.ConvertToWriteableBitmap(image);
+            var imageToEncrypt = ToWriteableBitmapConverter.ConvertToWriteableBitmap(image);
 
             using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
             {
@@ -39,7 +40,15 @@ namespace ImageSandbox.Utilities.Encryption
                 var sourcePixels = pixelData.DetachPixelData();
 
                 var encryptedImage = Encrypt(sourcePixels, decoder);
-                return encryptedImage;
+
+                using (var writeStream = imageToEncrypt.PixelBuffer.AsStream())
+                {
+                    await writeStream.WriteAsync(encryptedImage, 0, encryptedImage.Length);
+                    image.Source = imageToEncrypt;
+                    return image;
+                }
+
+                
             }
         }
 

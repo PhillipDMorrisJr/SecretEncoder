@@ -100,7 +100,7 @@ namespace ImageSandbox.View
             {
                 _sourceImageFile = await SelectSourceImageFile();
                 ImageDisplay = await ToImageConverter.Convert(_sourceImageFile, ImageDisplay);
-                _sourceImage = WriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay);
+                _sourceImage = ToWriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay);
             }
             catch (Exception)
             {
@@ -120,7 +120,7 @@ namespace ImageSandbox.View
             {
                 _embedImageFile = await SelectSourceImageFile();
                 EmbedDisplay = await ToImageConverter.Convert(_embedImageFile, EmbedDisplay);
-                _embedImage = WriteableBitmapConverter.ConvertToWriteableBitmap(EmbedDisplay);
+                _embedImage = ToWriteableBitmapConverter.ConvertToWriteableBitmap(EmbedDisplay);
             }
             catch (Exception)
             {
@@ -148,10 +148,10 @@ namespace ImageSandbox.View
             try
             {
                 var image = await ImageEmbedder.ExtractHiddenImage(
-                    WriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay),
+                    ToWriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay),
                     _sourceImageFile);
 
-                _imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(image);
+                _imageResult = ToWriteableBitmapConverter.ConvertToWriteableBitmap(image);
                 EncryptedImage.Source = _imageResult;
                 await CustomDialog("Next, save the image to view the hidden message!");
             }
@@ -192,9 +192,9 @@ namespace ImageSandbox.View
         {
             try
             {
-                var encryptedPixels = await ImageEncryption.EncryptAsync(ImageDisplay, _sourceImageFile);
+                var encryptedImage = await ImageEncryption.EncryptAsync(ImageDisplay, _sourceImageFile);
 
-                ImageDisplay = await ToImageConverter.Convert(encryptedPixels, ImageDisplay, _sourceImage);
+                ImageDisplay = encryptedImage;
             }
             catch (Exception)
             {
