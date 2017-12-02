@@ -7,9 +7,7 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
-using ImageSandbox.Utilities;
 using ImageSandbox.Utilities.Converter;
 using ImageSandbox.Utilities.Embedder;
 using ImageSandbox.Utilities.Encryption;
@@ -45,7 +43,6 @@ namespace ImageSandbox
 
         private async Task<StorageFile> SelectSourceImageFile()
         {
-
             var openPicker = new FileOpenPicker
             {
                 ViewMode = PickerViewMode.Thumbnail,
@@ -96,7 +93,6 @@ namespace ImageSandbox
             }
         }
 
-        
 
         private async void selectSourceImage_OnClick(object sender, RoutedEventArgs e)
         {
@@ -110,7 +106,6 @@ namespace ImageSandbox
             {
                 await FailedSelectionDialog();
             }
-
         }
 
         private static async Task FailedSelectionDialog()
@@ -123,17 +118,16 @@ namespace ImageSandbox
         {
             try
             {
-            _embedImageFile = await SelectSourceImageFile();
-            EmbedDisplay = await ToImageConverter.Convert(_embedImageFile, EmbedDisplay);
-            _embedImage = WriteableBitmapConverter.ConvertToWriteableBitmap(EmbedDisplay);
+                _embedImageFile = await SelectSourceImageFile();
+                EmbedDisplay = await ToImageConverter.Convert(_embedImageFile, EmbedDisplay);
+                _embedImage = WriteableBitmapConverter.ConvertToWriteableBitmap(EmbedDisplay);
             }
             catch (Exception)
             {
                 await FailedSelectionDialog();
             }
-
         }
-        
+
 
         private async void embedImageButton_OnClick(object sender, RoutedEventArgs e)
         {
@@ -141,36 +135,35 @@ namespace ImageSandbox
             {
                 _imageResult =
                     await ImageEmbedder.EmbedImage(_sourceImage, _embedImage, _sourceImageFile, _embedImageFile);
-                this.EncryptedImage.Source = _imageResult;
+                EncryptedImage.Source = _imageResult;
             }
             catch (Exception)
             {
                 await CustomDialog("Embedding failed try selecting new files or restarting the program.");
             }
-  
         }
 
         private async void extractImageButton_OnClick(object sender, RoutedEventArgs e)
         {
             try
             {
-                EncryptedImage = await ImageEmbedder.ExtractHiddenImage(
+                var image = await ImageEmbedder.ExtractHiddenImage(
                     WriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay),
                     _sourceImageFile);
-                _imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(EncryptedImage);
+
+                _imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(image);
+                EncryptedImage.Source = _imageResult;
             }
             catch (Exception)
             {
                 await CustomDialog("There are no secrets behind this image");
             }
-
         }
 
-        private static async Task CustomDialog(String content)
+        private static async Task CustomDialog(string content)
         {
-            ContentDialog notImageEncryptedDialog = new ContentDialog()
+            var notImageEncryptedDialog = new ContentDialog
             {
-                
                 Content = content,
                 IsPrimaryButtonEnabled = true,
                 PrimaryButtonText = "Okay"
@@ -190,7 +183,7 @@ namespace ImageSandbox
 
         private static async Task NotImpelmplementedDialog()
         {
-            await NotImpelmplementedDialog();
+            await CustomDialog("The functionality for this operation has not been implemented");
         }
 
 
@@ -206,7 +199,6 @@ namespace ImageSandbox
             {
                 await CustomDialog("Image cannot be encrypted");
             }
-
         }
     }
 
