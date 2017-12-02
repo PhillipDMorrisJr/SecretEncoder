@@ -185,7 +185,7 @@ namespace ImageSandbox.Utilities.Embedder
                 {
                     case 0 when j == 0:
                         sourceColor = PixelRetriever.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
-                        //TODO: CHEck if encrpyted post content dialog
+                        //TODO: Check if encrpyted post content dialog
                         break;
                     case 1 when j == 0:
                         var bitVal0 = sourceColor.R & 1;

@@ -13,23 +13,22 @@ namespace ImageSandbox.Utilities.Retriever
     {
         public static async Task<double> RetrieveX(StorageFile imageFile)
         {
-            double x = 0;
             using (var embedfileStream = await imageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(embedfileStream);
-                x = decoder.DpiX;
+                var x = decoder.DpiX;
+                return x;
             }
-            return x;
         }
         public static async Task<double> RetrieveY(StorageFile imageFile)
         {
-            double y = 0;
             using (var embedfileStream = await imageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(embedfileStream);
-                y = decoder.DpiY;
+                var y = decoder.DpiY;
+                return y;
             }
-            return y;
+            
         }
     }
 }
