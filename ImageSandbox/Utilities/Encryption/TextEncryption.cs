@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Text.RegularExpressions;
 
 namespace ImageSandbox.Utilities.Encryption
 {
@@ -9,9 +8,9 @@ namespace ImageSandbox.Utilities.Encryption
     public class TextEncryption
     {
         #region Methods
-        
+
         /// <summary>
-        /// Encrypts the decrypt text.
+        ///     Encrypts and decrypts text using ROT.
         /// </summary>
         /// <param name="textToCrypt">The text to crypt.</param>
         /// <param name="rotation">The rotation.</param>
@@ -24,12 +23,11 @@ namespace ImageSandbox.Utilities.Encryption
             {
                 if (currentChar >= 'a' && currentChar <= 'm' || currentChar >= 'A' && currentChar <= 'M')
                 {
-                    result.Append((char)((int)currentChar + rotation));
-
+                    result.Append((char) (currentChar + rotation));
                 }
                 else if (currentChar >= 'n' && currentChar <= 'z' || currentChar >= 'N' && currentChar <= 'Z')
                 {
-                    result.Append((char)((int)currentChar - rotation));
+                    result.Append((char) (currentChar - rotation));
                 }
                 else
                 {
@@ -41,7 +39,7 @@ namespace ImageSandbox.Utilities.Encryption
         }
 
         /// <summary>
-        /// Adds the end of message sequence marker.
+        ///     Adds the end of message sequence marker.
         /// </summary>
         /// <param name="cipherText">The cipher text.</param>
         /// <returns></returns>
@@ -50,7 +48,7 @@ namespace ImageSandbox.Utilities.Encryption
             var result = new StringBuilder();
 
             result.Append("!EOM!");
-            
+
             return result.ToString();
         }
 
