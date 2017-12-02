@@ -7,7 +7,9 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
+using ImageSandbox.Utilities;
 using ImageSandbox.Utilities.Converter;
 using ImageSandbox.Utilities.Embedder;
 using ImageSandbox.Utilities.Encryption;
@@ -18,8 +20,17 @@ namespace ImageSandbox
     /// <summary>
     ///     Application main page.
     /// </summary>
-    public sealed partial class MainPage
+    public sealed partial class MainPage : Page
     {
+        #region Constructors
+
+        public MainPage()
+        {
+            InitializeComponent();
+        }
+
+        #endregion
+
         #region Data members
 
         private WriteableBitmap _embedImage;
@@ -30,20 +41,12 @@ namespace ImageSandbox
 
         #endregion
 
-        #region Constructors
-
-        public MainPage()
-        {
-            this.InitializeComponent();
-        }
-
-        #endregion
-
         #region Methods
 
         private async Task<StorageFile> SelectSourceImageFile()
         {
-            var openPicker = new FileOpenPicker {
+            var openPicker = new FileOpenPicker
+            {
                 ViewMode = PickerViewMode.Thumbnail,
                 SuggestedStartLocation = PickerLocationId.PicturesLibrary
             };
@@ -55,14 +58,16 @@ namespace ImageSandbox
             return file;
         }
 
+
         private void saveButton_OnClick(object sender, RoutedEventArgs e)
         {
-            this.saveWritableBitmap();
+            SaveWritableBitmap();
         }
 
-        private async void saveWritableBitmap()
+        private async void SaveWritableBitmap()
         {
-            var fileSavePicker = new FileSavePicker {
+            var fileSavePicker = new FileSavePicker
+            {
                 SuggestedStartLocation = PickerLocationId.PicturesLibrary,
                 SuggestedFileName = "image"
             };
@@ -74,61 +79,68 @@ namespace ImageSandbox
                 var stream = await savefile.OpenAsync(FileAccessMode.ReadWrite);
                 var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
 
-                var pixelStream = this._imageResult.PixelBuffer.AsStream();
+                var pixelStream = _imageResult.PixelBuffer.AsStream();
                 var pixels = new byte[pixelStream.Length];
                 await pixelStream.ReadAsync(pixels, 0, pixels.Length);
 
-                var x = await DotsPerInch.RetrieveX(this._sourceImageFile);
-                var y = await DotsPerInch.RetrieveY(this._sourceImageFile);
+                var x = await DotsPerInch.RetrieveX(_sourceImageFile);
+                var y = await DotsPerInch.RetrieveY(_sourceImageFile);
 
                 encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore,
-                    (uint) this._imageResult.PixelWidth,
-                    (uint) this._imageResult.PixelHeight, x, y, pixels);
+                    (uint) _imageResult.PixelWidth,
+                    (uint) _imageResult.PixelHeight, x, y, pixels);
                 await encoder.FlushAsync();
 
                 stream.Dispose();
             }
         }
 
+        
+
         private async void selectSourceImage_OnClick(object sender, RoutedEventArgs e)
         {
-            this._sourceImageFile = await this.SelectSourceImageFile();
-            this.ImageDisplay = await ToImageConverter.Convert(this._sourceImageFile, this.ImageDisplay);
-            this._sourceImage = WriteableBitmapConverter.ConvertToWriteableBitmap(this.ImageDisplay);
+            _sourceImageFile = await SelectSourceImageFile();
+            ImageDisplay = await ToImageConverter.Convert(_sourceImageFile, ImageDisplay);
+            _sourceImage = WriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay);
         }
 
+        
         private async void selectImageToEmbedWith_OnClick(object sender, RoutedEventArgs e)
         {
-            this._embedImageFile = await this.SelectSourceImageFile();
-            this.EmbedDisplay = await ToImageConverter.Convert(this._embedImageFile, this.EmbedDisplay);
-            this._embedImage = WriteableBitmapConverter.ConvertToWriteableBitmap(this.EmbedDisplay);
+            _embedImageFile = await SelectSourceImageFile();
+            EmbedDisplay = await ToImageConverter.Convert(_embedImageFile, EmbedDisplay);
+            _embedImage = WriteableBitmapConverter.ConvertToWriteableBitmap(EmbedDisplay);
         }
+        
 
         private async void embedImageButton_OnClick(object sender, RoutedEventArgs e)
         {
-            this.EncryptedImage =
-                await ImageEmbedder.EmbedImage(this._sourceImage, this._embedImage, this._sourceImageFile,
-                    this._embedImageFile, new Image());
-            this._imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(this.EncryptedImage);
+            _imageResult =
+                await ImageEmbedder.EmbedImage(_sourceImage, _embedImage, _sourceImageFile, _embedImageFile);
+            this.EncryptedImage.Source = _imageResult;
         }
 
         private async void extractImageButton_OnClick(object sender, RoutedEventArgs e)
         {
             try
             {
-                this.EncryptedImage = await ImageEmbedder.ExtractHiddenImage(
-                    WriteableBitmapConverter.ConvertToWriteableBitmap(this.ImageDisplay), this._sourceImageFile);
-                this._imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(this.EncryptedImage);
+                EncryptedImage = await ImageEmbedder.ExtractHiddenImage(
+                    WriteableBitmapConverter.ConvertToWriteableBitmap(ImageDisplay),
+                    _sourceImageFile);
+                _imageResult = WriteableBitmapConverter.ConvertToWriteableBitmap(EncryptedImage);
             }
             catch (Exception)
             {
-                await customDialog("There are no secrets behind this image");
+                await CustomDialog("There are no secrets behind this image");
             }
+
         }
 
-        private static async Task customDialog(string content)
+        private static async Task CustomDialog(String content)
         {
-            var notImageEncryptedDialog = new ContentDialog {
+            ContentDialog notImageEncryptedDialog = new ContentDialog()
+            {
+                
                 Content = content,
                 IsPrimaryButtonEnabled = true,
                 PrimaryButtonText = "Okay"
@@ -138,29 +150,30 @@ namespace ImageSandbox
 
         private async void embedTextButton_OnClick(object sender, RoutedEventArgs e)
         {
-            await customDialog("Functionality not implemeted");
+            await CustomDialog("Functionality not implemeted");
         }
 
         private async void extractTextButton_OnClick(object sender, RoutedEventArgs e)
         {
-            await customDialog("Functionality not implemeted");
+            await CustomDialog("Functionality not implemeted");
         }
+
 
         private async void encryptImageButton_OnClick(object sender, RoutedEventArgs e)
         {
             try
             {
-                var encryptedPixels = await ImageEncryption.EncryptAsync(this.ImageDisplay, this._sourceImageFile);
+                var encryptedPixels = await ImageEncryption.EncryptAsync(ImageDisplay, _sourceImageFile);
 
-                this.ImageDisplay =
-                    await ToImageConverter.Convert(encryptedPixels, this.ImageDisplay, this._sourceImage);
+                ImageDisplay = await ToImageConverter.Convert(encryptedPixels, ImageDisplay, _sourceImage);
             }
             catch (Exception)
             {
-                await customDialog("Image cannot be encrypted");
+                await CustomDialog("Image cannot be encrypted");
             }
-        }
 
-        #endregion
+        }
     }
+
+    #endregion
 }

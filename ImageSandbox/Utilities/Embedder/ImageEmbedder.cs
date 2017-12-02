@@ -12,12 +12,10 @@ using ImageSandbox.Utilities.Retriever;
 namespace ImageSandbox.Utilities.Embedder
 {
     /// <summary>
-    ///     Embeds an image into an image.
+    ///     Encrypts an image into an image.
     /// </summary>
     public static class ImageEmbedder
     {
-        #region Methods
-
         /// <summary>
         ///     Embeds the image.
         /// </summary>
@@ -27,34 +25,40 @@ namespace ImageSandbox.Utilities.Embedder
         /// <param name="embedImageFile">The embed image file.</param>
         /// <param name="display">The display.</param>
         /// <returns></returns>
-        public static async Task<Image> EmbedImage(WriteableBitmap sourceImage, WriteableBitmap imageToEmbed,
-            StorageFile sourceImageFile, StorageFile embedImageFile, Image display)
+        public static async Task<WriteableBitmap> EmbedImage(WriteableBitmap sourceImage, WriteableBitmap imageToEmbed,
+            StorageFile sourceImageFile, StorageFile embedImageFile)
         {
             using (var fileStream = await sourceImageFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var sourcePixelData = await pixelDataProvider(imageToEmbed, decoder);
+                var sourcePixelData = await PixelDataProvider(sourceImage, decoder);
 
                 var sourcePixels = sourcePixelData.DetachPixelData();
 
                 using (var embedfileStream = await embedImageFile.OpenAsync(FileAccessMode.Read))
                 {
                     var embeddecoder = await BitmapDecoder.CreateAsync(embedfileStream);
-                    var embedPixelData = await pixelDataProvider(imageToEmbed, embeddecoder);
+                    var embedPixelData = await PixelDataProvider(imageToEmbed, embeddecoder);
 
                     var embedSourcePixels = embedPixelData.DetachPixelData();
 
-                    sourcePixels = embedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth,
+                    WriteableBitmap bitmap = new WriteableBitmap((int)decoder.PixelWidth, (int)decoder.PixelHeight); 
+
+                    sourcePixels = EmbedImageWithImage(sourcePixels, embedSourcePixels, embeddecoder.PixelWidth,
                         embeddecoder.PixelHeight, decoder.PixelWidth, decoder.PixelHeight);
-                    if (sourcePixels != null)
+
+                    if (sourcePixels == null) return bitmap;
+
+                    using (var writeStream = bitmap.PixelBuffer.AsStream())
                     {
-                        var image = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
-                        display = await ToImageConverter.Convert(sourcePixels, display, image);
+                        await writeStream.WriteAsync(sourcePixels, 0, sourcePixels.Length);
                     }
-                    return display;
+                    
+                    return bitmap;
                 }
             }
         }
+
 
         /// <summary>
         /// Extracts the hidden image.
@@ -68,7 +72,8 @@ namespace ImageSandbox.Utilities.Embedder
             using (var fileStream = await sourceFile.OpenAsync(FileAccessMode.Read))
             {
                 var decoder = await BitmapDecoder.CreateAsync(fileStream);
-                var transform = new BitmapTransform {
+                var transform = new BitmapTransform
+                {
                     ScaledWidth = Convert.ToUInt32(sourceImage.PixelWidth),
                     ScaledHeight = Convert.ToUInt32(sourceImage.PixelHeight)
                 };
@@ -83,8 +88,7 @@ namespace ImageSandbox.Utilities.Embedder
 
                 var sourcePixels = pixelData.DetachPixelData();
 
-                var extractedPixels =
-                    await extractImageWithImage(sourcePixels, decoder.PixelWidth, decoder.PixelHeight);
+                var extractedPixels = await ExtractImageWithImage(sourcePixels, decoder.PixelWidth, decoder.PixelHeight);
 
                 var embeddedImageBitmap = new WriteableBitmap((int) decoder.PixelWidth, (int) decoder.PixelHeight);
 
@@ -97,10 +101,11 @@ namespace ImageSandbox.Utilities.Embedder
             return hiddenImage;
         }
 
-        private static async Task<PixelDataProvider> pixelDataProvider(WriteableBitmap aBitmapImage,
+        private static async Task<PixelDataProvider> PixelDataProvider(WriteableBitmap aBitmapImage,
             BitmapDecoder decoder)
         {
-            var transform = new BitmapTransform {
+            var transform = new BitmapTransform
+            {
                 ScaledWidth = Convert.ToUInt32(aBitmapImage.PixelWidth),
                 ScaledHeight = Convert.ToUInt32(aBitmapImage.PixelHeight)
             };
@@ -124,7 +129,7 @@ namespace ImageSandbox.Utilities.Embedder
         /// <param name="embedImageHeight">Height of the imageToEmbed image.</param>
         /// <param name="sourceImageWidth">Width of the sourceImage image.</param>
         /// <param name="sourceImageHeight">Height of the sourceImage image.</param>
-        private static byte[] embedImageWithImage(byte[] sourcePixels, byte[] embedPixels, uint embedImageWidth,
+        private static byte[] EmbedImageWithImage(byte[] sourcePixels, byte[] embedPixels, uint embedImageWidth,
             uint embedImageHeight, uint sourceImageWidth, uint sourceImageHeight)
         {
             var sourceColor = Color.FromArgb(119, 119, 119, 119);
@@ -135,7 +140,6 @@ namespace ImageSandbox.Utilities.Embedder
 
             for (var y = 0; y < embedImageHeight; y++)
             for (var x = 0; x < embedImageWidth; x++)
-            {
                 if (x == 0 && y == 0)
                 {
                     PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
@@ -164,9 +168,9 @@ namespace ImageSandbox.Utilities.Embedder
                         PixelRetriever.ModifyPixel(sourcePixels, x, y, sourceColor, sourceImageWidth);
                     }
                 }
-            }
             return sourcePixels;
         }
+
 
         /// <summary>
         ///     Extracts the image with image.
@@ -175,10 +179,10 @@ namespace ImageSandbox.Utilities.Embedder
         /// <param name="sourceImageWidth">Width of the sourceImage image.</param>
         /// <param name="sourceImageHeight">Height of the sourceImage image.</param>
         /// <returns></returns>
-        private static async Task<byte[]> extractImageWithImage(byte[] sourcePixels, uint sourceImageWidth,
-            uint sourceImageHeight)
+        private static async Task<byte[]> ExtractImageWithImage(byte[] sourcePixels, uint sourceImageWidth, uint sourceImageHeight)
         {
             var imageExtract = new byte[sourcePixels.Length];
+
 
             for (var i = 0; i < sourceImageHeight; i++)
             for (var j = 0; j < sourceImageWidth; j++)
@@ -189,10 +193,10 @@ namespace ImageSandbox.Utilities.Embedder
                 {
                     case 0 when j == 0:
 
-                        sourceColor =
-                            PixelRetriever.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
+                        sourceColor = PixelRetriever.RetrieveColor(sourcePixels, i, j, sourceImageWidth, sourceImageHeight);
                         if (sourceColor.Equals(Color.FromArgb(119, 119, 119, 119)))
                         {
+                            
                             return null;
                         }
                         break;
@@ -200,6 +204,7 @@ namespace ImageSandbox.Utilities.Embedder
                         var bitVal0 = sourceColor.R & 1;
                         if (bitVal0 == 1)
                         {
+                            
                             return null;
                         }
                         break;
@@ -209,13 +214,9 @@ namespace ImageSandbox.Utilities.Embedder
 
                         var bitVal = sourceColor.B & 1;
                         if (bitVal == 0)
-                        {
                             PixelRetriever.ModifyPixel(imageExtract, i, j, Colors.Black, sourceImageWidth);
-                        }
                         else
-                        {
                             PixelRetriever.ModifyPixel(imageExtract, i, j, Colors.White, sourceImageWidth);
-                        }
 
                         break;
                 }
@@ -224,6 +225,6 @@ namespace ImageSandbox.Utilities.Embedder
             return imageExtract;
         }
 
-        #endregion
+     
     }
 }
